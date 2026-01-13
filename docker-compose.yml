@@ -8,7 +8,8 @@ services:
     restart: always
     environment:
       - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=TuPasswordFuerte123!
+      - SA_PASSWORD=TuPasswordFuerte123!
+
     ports:
       - "1433:1433"
     volumes:

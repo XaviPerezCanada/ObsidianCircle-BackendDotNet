@@ -1,13 +1,15 @@
-using Microsoft.EntityFrameworkCore;
-using MiProyecto.Infrastructure.Persistence;
+ï»¿using Microsoft.EntityFrameworkCore;
 using MiProyecto.Application;
+using MiProyecto.Application.Interfaces;
+using MiProyecto.Infrastructure.Persistence;
+using MiProyecto.Infrastructure.Persistence.UnitOfWork;
+using MiProyecto.Application.BoardGames.Interfaces;
+using MiProyecto.Infrastructure.BoardGames.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Controllers (IMPORTANTE)
 builder.Services.AddControllers();
 
-// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
@@ -18,26 +20,29 @@ builder.Services.AddCors(options =>
     });
 });
 
-// OpenAPI / Swagger (forma estándar)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// DBs
 var sqlConn = builder.Configuration.GetConnectionString("DefaultConnection");
 var pgConn = builder.Configuration.GetConnectionString("PostgresConnection");
 
-builder.Services.AddDbContext<SqlServerDbContext>(options =>
-    options.UseSqlServer(sqlConn));
+if (string.IsNullOrWhiteSpace(sqlConn))
+    throw new Exception("Connection string 'DefaultConnection' no encontrada.");
+if (string.IsNullOrWhiteSpace(pgConn))
+    throw new Exception("Connection string 'PostgresConnection' no encontrada.");
 
-builder.Services.AddDbContext<PostgresDbContext>(options =>
-    options.UseNpgsql(pgConn));
+builder.Services.AddDbContext<SqlServerDbContext>(options => options.UseSqlServer(sqlConn));
+builder.Services.AddDbContext<PostgresDbContext>(options => options.UseNpgsql(pgConn));
 
-// Application services
+builder.Services.AddScoped<ISqlUnitOfWork, SqlUnitOfWork>();
+builder.Services.AddScoped<IPgUnitOfWork, PgUnitOfWork>();
+
+builder.Services.AddScoped<IBoardGameRepository, SqlBoardGameRepository>();
+
 builder.Services.AddApplicationServices();
 
 var app = builder.Build();
 
-// Pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -45,11 +50,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseCors("AllowReactApp");
-
 app.UseAuthorization();
- 
 app.MapControllers();
-
 app.Run();

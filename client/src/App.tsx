@@ -1,31 +1,17 @@
-import { useEffect, useState } from 'react';
-import { getWeather, type WeatherForecast } from './services/weatherService';
-import './App.css';
+
+// Asegúrate de importar desde la ruta correcta donde creaste el componente
+import { Navbar } from './features/layout/presentation/component/Navbar';
+import { AuthContainer } from './features/auth/presentation/component/AuthContainer';
 
 function App() {
-  
-  const [forecast, setForecast] = useState<WeatherForecast[]>([]);
-
-  useEffect(() => {
-    getWeather()
-      .then(data => {
-          // Si aquí intentas hacer data.push("texto"), TS te marcará ERROR.
-          setForecast(data);
-      })
-      .catch(err => console.error(err));
-  }, []);
-
   return (
-    <div className="App">
-      <h1>Clima (con TypeScript)</h1>
-      <ul>
-        {forecast.map((item, index) => (
-          // ¡Aquí tienes autocompletado! Si escribes "item.", te saldrán las propiedades.
-          <li key={index}>
-            {item.date} - {item.temperatureC}°C ({item.summary})
-          </li>
-        ))}
-      </ul>
+    <div className="App" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
+      <Navbar />
+   
+      <main style={{ padding: '20px', flex: 1, width: '100%', overflowX: 'hidden' }}>
+        <h1>Main Page</h1>
+        <AuthContainer />
+      </main>
     </div>
   );
 }
