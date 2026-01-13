@@ -49,7 +49,7 @@ app.UseHttpsRedirection();
 app.UseCors("AllowReactApp");
 
 app.UseAuthorization();
-
+ 
 app.MapControllers();
 
 app.Run();
