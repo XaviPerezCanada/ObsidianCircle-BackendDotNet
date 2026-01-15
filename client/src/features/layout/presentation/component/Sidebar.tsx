@@ -8,7 +8,7 @@ export const Sidebar = () => {
 
   return (
     <aside 
-      className={`h-screen bg-[#141414] text-white flex flex-col sticky top-0 transition-all duration-300 ${
+      className={`h-screen bg-[#141414] text-white flex flex-col transition-all duration-300 ${
         collapsed ? 'w-20' : 'w-60'
       }`}
     >
