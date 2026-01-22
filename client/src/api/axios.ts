@@ -1,7 +1,6 @@
 import axios, { type AxiosInstance, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 
-// URL del backend FastAPI (por defecto http://localhost:8000 si no está configurado)
-// Asegurarse de usar HTTP, no HTTPS
+
 let baseURL: string = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL_PY || 'http://localhost:8000';
 
 // Forzar HTTP si viene como HTTPS (el backend FastAPI no tiene SSL)

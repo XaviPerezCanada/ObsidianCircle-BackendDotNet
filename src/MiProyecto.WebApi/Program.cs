@@ -5,6 +5,7 @@ using MiProyecto.Infrastructure.Persistence;
 using MiProyecto.Infrastructure.Persistence.UnitOfWork;
 using MiProyecto.Application.BoardGames.Interfaces;
 using MiProyecto.Infrastructure.BoardGames.Repositories;
+using MiProyecto.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +52,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowReactApp");
+
+// Middleware de manejo de excepciones global (debe ir antes de UseAuthorization)
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
