@@ -1,5 +1,5 @@
 ﻿using MiProyecto.Application.Interfaces;
-using MiProyecto.Infrastructure.Persistence;
+using MiProyecto.Infrastructure.Persistence.UnitOfWork;
 
 namespace MiProyecto.Infrastructure.Persistence.UnitOfWork;
 

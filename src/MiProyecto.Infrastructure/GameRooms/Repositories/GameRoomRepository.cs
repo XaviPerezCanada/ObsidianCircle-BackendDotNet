@@ -1,8 +1,10 @@
-﻿using MiProyecto.Domain.GameRooms.Entities;
-using MiProyecto.Domain.Interfaces;
+using MiProyecto.Domain.GameRooms.Entities;
+using MiProyecto.Domain.GameRooms.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using MiProyecto.Domain.Common.ValueObjects;
 
-namespace MiProyecto.Infrastructure.Persistence
+namespace MiProyecto.Infrastructure.GameRooms.Repositories
+
 {
     public class GameRoomRepository : IGameRoomRepository
     {
@@ -11,9 +13,10 @@ namespace MiProyecto.Infrastructure.Persistence
 
 
 
-        public async Task<GameRoom?> GetByIdAsync(Guid id)
+        public async Task<GameRoom?> GetBySlugAsync(Slug slug)
         {
-            return await _db.Set<GameRoom>().FindAsync(id);
+            return await _db.Set<GameRoom>()
+                .FirstOrDefaultAsync(r => r.Slug == slug.Value);
         }
 
         public async Task<IEnumerable<GameRoom>> GetAllAsync()

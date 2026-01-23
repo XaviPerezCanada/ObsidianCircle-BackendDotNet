@@ -2,6 +2,7 @@
 using MiProyecto.Application.BoardGames.Interfaces;
 using MiProyecto.Application.Interfaces;
 using MiProyecto.Domain.BoardGames.Entities;
+using MiProyecto.Domain.Common.ValueObjects;
 
 namespace MiProyecto.Application.BoardGames.UseCases;
 
@@ -14,38 +15,25 @@ public record CreateBoardGameCommand(
 
 public class CreateBoardGameHandler
 {
-    private readonly IBoardGameRepository _repo;
-    private readonly ISqlUnitOfWork _uow;
+    private readonly ISlugGenerator _slugGenerator;
 
-    public CreateBoardGameHandler(IBoardGameRepository repo, ISqlUnitOfWork uow) 
-    {   _repo = repo;
-        _uow = uow;
-        }
-    public async Task<BoardGameDto> Handle(CreateBoardGameCommand cmd, CancellationToken ct = default)
+    public CreateBoardGameHandler(ISlugGenerator slugGenerator)
     {
-        var entity = new BoardGame(cmd.Titulo, cmd.Socio, cmd.JugadoresMin, cmd.JugadoresMax);
-
-        await _repo.AddAsync(entity, ct);
-        await _uow.SaveChangesAsync(ct);
-
-
-        return new BoardGameDto(
-            entity.Id,
-            entity.Titulo,
-            entity.Socio,
-            entity.Editorial,
-            entity.Genero,
-            entity.JugadoresMin,
-            entity.JugadoresMax,
-            entity.EdadRecomendada,
-            entity.DuracionMinutos,
-            entity.Ubicacion,
-            entity.Idioma,
-            entity.ImagenUrl,
-            entity.Observaciones,
-            entity.Estado,
-            entity.Disponibilidad,
-            entity.FechaRegistro
+        _slugGenerator = slugGenerator;
+    }
+    public BoardGame Handle(string titulo, string socio, int jugadoresMin, int jugadoresMax)
+    {  
+        var slug = _slugGenerator.Generate(titulo);
+ 
+        var boardGame = new BoardGame(
+            titulo,
+            slug,
+            socio,
+            jugadoresMin,
+            jugadoresMax
         );
+
+        return boardGame;
     }
 }
+

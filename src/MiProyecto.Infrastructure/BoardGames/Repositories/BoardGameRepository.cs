@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MiProyecto.Application.BoardGames.Interfaces;
 using MiProyecto.Domain.BoardGames.Entities;
-using MiProyecto.Infrastructure.Persistence;
+using MiProyecto.Infrastructure.GameRooms.Repositories;
 
 namespace MiProyecto.Infrastructure.BoardGames.Repositories;
 

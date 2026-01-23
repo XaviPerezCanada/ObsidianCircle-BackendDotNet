@@ -1,8 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using MiProyecto.Application.BoardGames.UseCases;
-using MiProyecto.Application.Services;
-using MiProyecto.Domain.Interfaces;
-using MiProyecto.Infrastructure.Persistence;
+using MiProyecto.Application.GameRooms.Services;
 
 namespace MiProyecto.Application;
 
@@ -14,7 +12,6 @@ public static class DependencyInjection
         services.AddScoped<CreateBoardGameHandler>();
         
         // GameRooms
-        services.AddScoped<IGameRoomRepository, GameRoomRepository>();
         services.AddScoped<GameRoomService>();
         
         return services;

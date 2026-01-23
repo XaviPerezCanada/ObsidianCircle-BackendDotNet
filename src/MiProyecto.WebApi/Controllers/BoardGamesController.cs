@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using MiProyecto.Application.BoardGames.UseCases;
 
 namespace MiProyecto.Api.Controllers;
@@ -19,7 +19,7 @@ public class BoardGamesController : ControllerBase
         [FromBody] CreateBoardGameCommand command,
         CancellationToken ct)
     {
-        var result = await _createHandler.Handle(command, ct);
+        var result = _createHandler.Handle(command.Titulo, command.Socio, command.JugadoresMin, command.JugadoresMax);
         return Ok(result);
     }
 }

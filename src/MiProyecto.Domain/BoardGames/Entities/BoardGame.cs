@@ -1,5 +1,7 @@
 ﻿using MiProyecto.Domain.BoardGames.Enums;
 using MiProyecto.Domain.BoardGames.Exceptions;
+using MiProyecto.Domain.Common;
+
 
 namespace MiProyecto.Domain.BoardGames.Entities
 {
@@ -10,8 +12,12 @@ namespace MiProyecto.Domain.BoardGames.Entities
         public string Titulo { get; private set; } = string.Empty;
         public string Socio { get; private set; } = string.Empty;
 
+        public string Slug { get; private set; } = string.Empty;
+
         public string Editorial { get; private set; } = string.Empty;
         public string Genero { get; private set; } = string.Empty;
+
+        public string Descripcion { get; private set; } = string.Empty;
 
         public int JugadoresMin { get; private set; }
         public int JugadoresMax { get; private set; }
@@ -22,6 +28,8 @@ namespace MiProyecto.Domain.BoardGames.Entities
         public string Ubicacion { get; private set; } = string.Empty;
         public string Idioma { get; private set; } = "Español";
 
+    
+
         public string ImagenUrl { get; private set; } = string.Empty;
         public string Observaciones { get; private set; } = string.Empty;
 
@@ -30,15 +38,17 @@ namespace MiProyecto.Domain.BoardGames.Entities
 
         public DateTime FechaRegistro { get; private set; } = DateTime.UtcNow;
 
-        protected BoardGame() { } // EF
+        protected BoardGame() { }
 
-        public BoardGame(string titulo, string socio, int jugadoresMin, int jugadoresMax)
+        public BoardGame(string titulo, string slug, string socio, int jugadoresMin, int jugadoresMax)
         {
             SetTitulo(titulo);
+            SetSlug(slug);             
             SetSocio(socio);
             SetJugadores(jugadoresMin, jugadoresMax);
             FechaRegistro = DateTime.UtcNow;
         }
+
 
         public void SetTitulo(string titulo)
         {
@@ -46,6 +56,15 @@ namespace MiProyecto.Domain.BoardGames.Entities
                 throw new DomainException("El título es obligatorio.");
 
             Titulo = titulo.Trim();
+            
+        }
+
+        private void SetSlug(string slug)
+        {
+            if (string.IsNullOrWhiteSpace(slug))
+                throw new DomainException("Slug inválido.");
+
+            Slug = slug.Trim();
         }
 
         public void SetSocio(string socio)
@@ -55,6 +74,7 @@ namespace MiProyecto.Domain.BoardGames.Entities
 
             Socio = socio.Trim();
         }
+
 
         public void SetJugadores(int min, int max)
         {

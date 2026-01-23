@@ -1,14 +1,22 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using MiProyecto.Application.GameRooms.DTOs;
-using MiProyecto.Application.Services;
+using MiProyecto.Application.GameRooms.Services;
+using MiProyecto.Domain.Common.ValueObjects;
 
 namespace MiProyecto.WebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class GameRoomsController(GameRoomService service) : ControllerBase
+    public class GameRoomsController : ControllerBase
     {
-        private readonly GameRoomService _service = service;
+        private readonly GameRoomService _service;
+        private readonly ISlugGenerator _slugGenerator;
+
+        public GameRoomsController(GameRoomService service, ISlugGenerator slugGenerator)
+        {
+            _service = service;
+            _slugGenerator = slugGenerator;
+        }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<GameRoomDto>>> GetAll()
@@ -16,36 +24,34 @@ namespace MiProyecto.WebAPI.Controllers
             var rooms = await _service.GetAllRoomsAsync();
             return Ok(rooms);
         }
-        [HttpGet("{id}")]
-        public async Task<ActionResult<GameRoomDto>> GetById(Guid id)
+
+        [HttpGet("{slug}")]
+        public async Task<ActionResult<GameRoomDto>> GetBySlug([FromRoute] string slug)
         {
-            // El middleware manejará automáticamente NotFoundException
-            var room = await _service.GetRoomByIdAsync(id);
+            var room = await _service.GetRoomBySlugAsync(Slug.From(slug, _slugGenerator));
             return Ok(room);
         }
-        
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateGameRoomDto request)
         {
-            // El middleware manejará automáticamente ArgumentException y otras excepciones
-            var id = await _service.CreateRoomAsync(request);
-            return Ok(new { RoomId = id });
+            var slug = await _service.CreateRoomAsync(request);
+
+            // 201 + Location header (REST)
+            return CreatedAtAction(nameof(GetBySlug), new { slug }, new { slug });
         }
-        
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, UpdateGameRoomDto dto)
+
+        [HttpPut("{slug}")]
+        public async Task<IActionResult> Update([FromRoute] string slug, [FromBody] UpdateGameRoomDto dto)
         {
-            // El middleware manejará automáticamente NotFoundException y ArgumentException
-            await _service.UpdateRoomAsync(id, dto);
-            return NoContent(); // 204 No Content es estándar para updates exitosos
+            await _service.UpdateRoomBySlugAsync(Slug.From(slug, _slugGenerator), dto);
+            return NoContent();
         }
-        
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
+
+        [HttpDelete("{slug}")]
+        public async Task<IActionResult> Delete([FromRoute] string slug)
         {
-            // El middleware manejará automáticamente NotFoundException
-            await _service.DeleteRoomAsync(id);
+            await _service.DeleteRoomBySlugAsync(Slug.From(slug, _slugGenerator));
             return NoContent();
         }
     }

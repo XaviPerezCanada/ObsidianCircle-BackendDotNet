@@ -1,10 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using MiProyecto.Application;
+using MiProyecto.Application.BoardGames.Interfaces;
 using MiProyecto.Application.Interfaces;
+using MiProyecto.Domain.Common.ValueObjects;
+using MiProyecto.Domain.GameRooms.Interfaces;
+using MiProyecto.Infrastructure.BoardGames.Repositories;
+using MiProyecto.Infrastructure.Common;
+using MiProyecto.Infrastructure.GameRooms.Repositories;
 using MiProyecto.Infrastructure.Persistence;
 using MiProyecto.Infrastructure.Persistence.UnitOfWork;
-using MiProyecto.Application.BoardGames.Interfaces;
-using MiProyecto.Infrastructure.BoardGames.Repositories;
 using MiProyecto.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,11 +38,13 @@ if (string.IsNullOrWhiteSpace(pgConn))
 
 builder.Services.AddDbContext<SqlServerDbContext>(options => options.UseSqlServer(sqlConn));
 builder.Services.AddDbContext<PostgresDbContext>(options => options.UseNpgsql(pgConn));
+builder.Services.AddSingleton<ISlugGenerator, DefaultSlugGenerator>();
 
 builder.Services.AddScoped<ISqlUnitOfWork, SqlUnitOfWork>();
 builder.Services.AddScoped<IPgUnitOfWork, PgUnitOfWork>();
 
 builder.Services.AddScoped<IBoardGameRepository, SqlBoardGameRepository>();
+builder.Services.AddScoped<IGameRoomRepository, GameRoomRepository>();
 
 builder.Services.AddApplicationServices();
 

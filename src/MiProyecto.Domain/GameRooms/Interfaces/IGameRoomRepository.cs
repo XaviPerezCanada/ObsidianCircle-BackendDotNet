@@ -1,11 +1,12 @@
-﻿using MiProyecto.Domain.GameRooms.Entities;
+﻿using MiProyecto.Domain.Common.ValueObjects;
+using MiProyecto.Domain.GameRooms.Entities;
 
-namespace MiProyecto.Domain.Interfaces
+namespace MiProyecto.Domain.GameRooms.Interfaces
 {
     public interface IGameRoomRepository
     {
-        Task<GameRoom?> GetByIdAsync(Guid id);
-        Task<IEnumerable<GameRoom>> GetAllAsync(); // Para el listado del dashboard
+        Task<GameRoom?> GetBySlugAsync(Slug slug);
+        Task<IEnumerable<GameRoom>> GetAllAsync(); 
         Task AddAsync(GameRoom room);
         Task UpdateAsync(GameRoom room);
         Task DeleteAsync(GameRoom room);
