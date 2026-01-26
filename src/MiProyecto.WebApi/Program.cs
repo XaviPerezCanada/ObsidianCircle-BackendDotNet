@@ -36,8 +36,18 @@ if (string.IsNullOrWhiteSpace(sqlConn))
 if (string.IsNullOrWhiteSpace(pgConn))
     throw new Exception("Connection string 'PostgresConnection' no encontrada.");
 
-builder.Services.AddDbContext<SqlServerDbContext>(options => options.UseSqlServer(sqlConn));
-builder.Services.AddDbContext<PostgresDbContext>(options => options.UseNpgsql(pgConn));
+builder.Services.AddDbContext<SqlServerDbContext>(options => 
+    options.UseSqlServer(sqlConn, sqlOptions => 
+        sqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
+            errorNumbersToAdd: null)));
+builder.Services.AddDbContext<PostgresDbContext>(options => 
+    options.UseNpgsql(pgConn, npgsqlOptions => 
+        npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
+            errorCodesToAdd: null)));
 builder.Services.AddSingleton<ISlugGenerator, DefaultSlugGenerator>();
 
 builder.Services.AddScoped<ISqlUnitOfWork, SqlUnitOfWork>();
@@ -50,8 +60,15 @@ builder.Services.AddApplicationServices();
 
 var app = builder.Build();
 
+// Crear la base de datos y las tablas si no existen (solo en desarrollo)
 if (app.Environment.IsDevelopment())
 {
+    using (var scope = app.Services.CreateScope())
+    {
+        var pgContext = scope.ServiceProvider.GetRequiredService<PostgresDbContext>();
+        pgContext.Database.EnsureCreated();
+    }
+    
     app.UseSwagger();
     app.UseSwaggerUI();
 }

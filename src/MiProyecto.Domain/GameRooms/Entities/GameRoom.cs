@@ -1,4 +1,4 @@
-﻿using MiProyecto.Domain.BoardGames.Exceptions;
+using MiProyecto.Domain.BoardGames.Exceptions;
 
 namespace MiProyecto.Domain.GameRooms.Entities
 
@@ -24,8 +24,11 @@ namespace MiProyecto.Domain.GameRooms.Entities
             UnderMaintenance
         }
 
+        // Constructor sin parámetros para Entity Framework
+        protected GameRoom() { }
+
         // Constructor para garantizar un estado válido al crear
-        public GameRoom(string name, string slug, int capacity, string descrioption )
+        public GameRoom(string name, string slug, int capacity, string description )
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("El nombre de la sala no puede estar vacío.", nameof(name));
@@ -36,7 +39,7 @@ namespace MiProyecto.Domain.GameRooms.Entities
             Id = Guid.NewGuid();
             Name = name;
             SetSlug(slug);
-            Description = descrioption;
+            Description = description;
             Capacity = capacity;
             Status = RoomStatus.Active;
             CreatedAt = DateTime.UtcNow;

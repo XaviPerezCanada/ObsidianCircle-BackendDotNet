@@ -8,8 +8,8 @@ namespace MiProyecto.Infrastructure.GameRooms.Repositories
 {
     public class GameRoomRepository : IGameRoomRepository
     {
-        private readonly SqlServerDbContext _db;
-        public GameRoomRepository(SqlServerDbContext db) => _db = db;
+        private readonly PostgresDbContext _db;
+        public GameRoomRepository(PostgresDbContext db) => _db = db;
 
 
 
