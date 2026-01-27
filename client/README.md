@@ -1,73 +1,149 @@
-# React + TypeScript + Vite
+# 🎲 Obsidian Circle - Tabletop RPG Companion
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Una aplicación web moderna para gestionar tus aventuras de rol de mesa. Construida con React + Vite en el frontend y Express + SQLite en el backend, siguiendo principios de Clean Architecture.
 
-Currently, two official plugins are available:
+## ✨ Características
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 🔐 **Autenticación completa** con JWT tokens
+- 👤 **Gestión de usuarios** con registro e inicio de sesión
+- 🎨 **UI moderna** con Tailwind CSS y componentes shadcn/ui
+- 🌙 **Tema oscuro/claro** con soporte del sistema
+- 📱 **Diseño responsive** para móvil y escritorio
+- 🏗️ **Clean Architecture** en el backend
+- 💾 **Base de datos SQLite** para desarrollo rápido
 
-## React Compiler
+## 🚀 Inicio Rápido
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Prerrequisitos
 
-## Expanding the ESLint configuration
+- Node.js 18+ 
+- npm o pnpm
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Instalación
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. **Clonar el repositorio**
+```bash
+git clone https://github.com/tu-usuario/obsidian-circle.git
+cd obsidian-circle
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+2. **Instalar dependencias del frontend**
+```bash
+npm install
 ```
+
+3. **Instalar dependencias del backend**
+```bash
+cd backendExpress
+npm install
+cd ..
+```
+
+4. **Configurar variables de entorno del backend**
+
+Crea un archivo `backendExpress/.env`:
+```env
+PORT=3001
+JWT_SECRET=tu-clave-secreta-super-segura-cambiar-en-produccion
+JWT_EXPIRES_IN=7d
+NODE_ENV=development
+```
+
+### Ejecutar en Desarrollo
+
+**Terminal 1 - Backend:**
+```bash
+cd backendExpress
+npm run dev
+```
+
+**Terminal 2 - Frontend:**
+```bash
+npm run dev
+```
+
+El frontend estará disponible en `http://localhost:5173` (o el puerto que Vite asigne) y el backend en `http://localhost:3001`.
+
+## 📁 Estructura del Proyecto
+
+```
+ObsidianCircleFinal/
+├── src/                    # Frontend React + Vite
+│   ├── components/         # Componentes React
+│   ├── context/           # Context API (Auth)
+│   ├── hooks/            # Custom hooks
+│   ├── lib/              # Utilidades
+│   ├── routes/            # Rutas y guards
+│   └── services/         # Servicios API
+├── backendExpress/        # Backend Express + SQLite
+│   ├── src/
+│   │   ├── domain/       # Capa de dominio
+│   │   ├── application/  # Casos de uso
+│   │   ├── infrastructure/ # Repositorios, servicios
+│   │   └── presentation/  # Controllers, routes
+│   └── data/             # Base de datos SQLite
+├── components/            # Componentes UI compartidos
+└── public/               # Archivos estáticos
+```
+
+## 🛠️ Tecnologías
+
+### Frontend
+- **React 19** - Biblioteca UI
+- **Vite** - Build tool y dev server
+- **TypeScript** - Tipado estático
+- **Tailwind CSS** - Estilos
+- **shadcn/ui** - Componentes UI
+- **React Router** - Navegación
+- **Axios** - Cliente HTTP
+- **Zod** - Validación
+
+### Backend
+- **Express** - Framework web
+- **SQLite** - Base de datos
+- **TypeScript** - Tipado estático
+- **JWT** - Autenticación
+- **bcryptjs** - Hash de contraseñas
+- **Zod** - Validación de DTOs
+
+## 📝 Scripts Disponibles
+
+### Frontend
+- `npm run dev` - Inicia servidor de desarrollo
+- `npm run build` - Construye para producción
+- `npm run preview` - Preview de producción
+- `npm run lint` - Ejecuta ESLint
+
+### Backend
+- `npm run dev` - Inicia servidor con hot reload
+- `npm run build` - Compila TypeScript
+- `npm start` - Ejecuta versión compilada
+- `npm run migrate` - Ejecuta migraciones de BD
+
+## 🔐 API Endpoints
+
+- `POST /api/usuarios/register` - Registro de usuario
+- `POST /api/usuarios/login` - Inicio de sesión
+- `GET /health` - Health check
+
+## 🤝 Contribuir
+
+Las contribuciones son bienvenidas. Por favor:
+
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT.
+
+## 👨‍💻 Autor
+
+Tu nombre aquí
+
+---
+
+⭐ Si te gusta este proyecto, dale una estrella en GitHub!

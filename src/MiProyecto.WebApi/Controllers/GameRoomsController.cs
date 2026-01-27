@@ -25,6 +25,14 @@ namespace MiProyecto.WebAPI.Controllers
             return Ok(rooms);
         }
 
+        [HttpGet("available")]
+
+        public async Task<ActionResult<IEnumerable<GameRoomDto>>> GetAllAvailableResultAsync() {
+
+            var rooms = await _service.GetAvailableRoomsAsync(); 
+            return Ok(rooms);
+        }
+
         [HttpGet("{slug}")]
         public async Task<ActionResult<GameRoomDto>> GetBySlug([FromRoute] string slug)
         {
@@ -52,6 +60,27 @@ namespace MiProyecto.WebAPI.Controllers
         public async Task<IActionResult> Delete([FromRoute] string slug)
         {
             await _service.DeleteRoomBySlugAsync(Slug.From(slug, _slugGenerator));
+            return NoContent();
+        }
+
+        [HttpPatch("{slug}/activate")]
+        public async Task<IActionResult> Activate([FromRoute] string slug)
+        {
+            await _service.ActivateRoomBySlugAsync(Slug.From(slug, _slugGenerator));
+            return NoContent();
+        }
+
+        [HttpPatch("{slug}/deactivate")]
+        public async Task<IActionResult> Deactivate([FromRoute] string slug)
+        {
+            await _service.DeactivateRoomBySlugAsync(Slug.From(slug, _slugGenerator));
+            return NoContent();
+        }
+
+        [HttpPatch("{slug}/maintenance")]
+        public async Task<IActionResult> SetMaintenanceMode([FromRoute] string slug)
+        {
+            await _service.SetMaintenanceModeBySlugAsync(Slug.From(slug, _slugGenerator));
             return NoContent();
         }
     }

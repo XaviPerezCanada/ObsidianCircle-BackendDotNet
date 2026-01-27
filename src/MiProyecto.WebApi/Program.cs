@@ -7,21 +7,45 @@ using MiProyecto.Domain.GameRooms.Interfaces;
 using MiProyecto.Infrastructure.BoardGames.Repositories;
 using MiProyecto.Infrastructure.Common;
 using MiProyecto.Infrastructure.GameRooms.Repositories;
-using MiProyecto.Infrastructure.Persistence;
 using MiProyecto.Infrastructure.Persistence.UnitOfWork;
 using MiProyecto.WebApi.Middleware;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Configurar serialización JSON para usar camelCase (compatible con JavaScript/TypeScript)
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.WriteIndented = true; // Opcional: para desarrollo
+    });
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        if (builder.Environment.IsDevelopment())
+        {
+            // En desarrollo, permitir cualquier origen localhost
+            policy.WithOrigins(
+                    "http://localhost:5173",
+                    "http://localhost:3000",
+                    "http://127.0.0.1:5173",
+                    "http://127.0.0.1:3000"
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        }
+        else
+        {
+            // En producción, solo permitir orígenes específicos
+            policy.WithOrigins("https://tu-dominio.com")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
     });
 });
 
@@ -42,12 +66,17 @@ builder.Services.AddDbContext<SqlServerDbContext>(options =>
             maxRetryCount: 5,
             maxRetryDelay: TimeSpan.FromSeconds(30),
             errorNumbersToAdd: null)));
-builder.Services.AddDbContext<PostgresDbContext>(options => 
-    options.UseNpgsql(pgConn, npgsqlOptions => 
+builder.Services.AddDbContext<PostgresDbContext>(options =>
+    options.UseNpgsql(pgConn, npgsqlOptions => {
+        // Habilitar reintentos
         npgsqlOptions.EnableRetryOnFailure(
             maxRetryCount: 5,
             maxRetryDelay: TimeSpan.FromSeconds(30),
-            errorCodesToAdd: null)));
+            errorCodesToAdd: null);
+
+        // AQU? EST? LA MAGIA: Definimos d?nde viven las migraciones
+        npgsqlOptions.MigrationsAssembly("MiProyecto.Infrastructure");
+    }));
 builder.Services.AddSingleton<ISlugGenerator, DefaultSlugGenerator>();
 
 builder.Services.AddScoped<ISqlUnitOfWork, SqlUnitOfWork>();
@@ -73,8 +102,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// CORS debe estar ANTES de UseHttpsRedirection y otros middlewares
 app.UseCors("AllowReactApp");
+
+app.UseHttpsRedirection();
 
 // Middleware de manejo de excepciones global (debe ir antes de UseAuthorization)
 app.UseMiddleware<ExceptionHandlingMiddleware>();
