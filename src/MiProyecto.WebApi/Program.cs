@@ -2,13 +2,17 @@ using Microsoft.EntityFrameworkCore;
 using MiProyecto.Application;
 using MiProyecto.Application.BoardGames.Interfaces;
 using MiProyecto.Application.Interfaces;
+using MiProyecto.Application.Users;
 using MiProyecto.Domain.Common.ValueObjects;
-using MiProyecto.Domain.GameRooms.Interfaces;
+using MiProyecto.Application.GameRooms.Interfaces;
 using MiProyecto.Infrastructure.BoardGames.Repositories;
 using MiProyecto.Infrastructure.Common;
 using MiProyecto.Infrastructure.GameRooms.Repositories;
 using MiProyecto.Infrastructure.Persistence.UnitOfWork;
+using MiProyecto.Infrastructure.Users;
 using MiProyecto.WebApi.Middleware;
+using MiProyecto.Application.Reservations.Interfaces;
+using MiProyecto.Infrastructure.Reservations.Repositories;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -82,8 +86,11 @@ builder.Services.AddSingleton<ISlugGenerator, DefaultSlugGenerator>();
 builder.Services.AddScoped<ISqlUnitOfWork, SqlUnitOfWork>();
 builder.Services.AddScoped<IPgUnitOfWork, PgUnitOfWork>();
 
-builder.Services.AddScoped<IBoardGameRepository, SqlBoardGameRepository>();
+builder.Services.AddScoped<IBoardGameRepository, BoardGameRepository>();
 builder.Services.AddScoped<IGameRoomRepository, GameRoomRepository>();
+builder.Services.AddScoped<IUserHandler, UserHandler>();
+builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
+
 
 builder.Services.AddApplicationServices();
 
@@ -95,9 +102,10 @@ if (app.Environment.IsDevelopment())
     using (var scope = app.Services.CreateScope())
     {
         var pgContext = scope.ServiceProvider.GetRequiredService<PostgresDbContext>();
-        pgContext.Database.EnsureCreated();
+        pgContext.Database.Migrate();
+
     }
-    
+
     app.UseSwagger();
     app.UseSwaggerUI();
 }

@@ -1,5 +1,5 @@
 using MiProyecto.Domain.GameRooms.Entities;
-using MiProyecto.Domain.GameRooms.Interfaces;
+using MiProyecto.Application.GameRooms.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using MiProyecto.Domain.Common.ValueObjects;
 
@@ -53,8 +53,11 @@ namespace MiProyecto.Infrastructure.GameRooms.Repositories
             _db.Set<GameRoom>().Remove(room);
             await _db.SaveChangesAsync();
         }
+        public async Task<GameRoom?> GetByIdAsync(Guid id)
+        {
+            return await _db.Set<GameRoom>().FirstOrDefaultAsync(r => r.Id == id);
+        }
 
 
-       
     }
 }

@@ -6,5 +6,7 @@ public interface IBoardGameRepository
 {
     Task AddAsync(BoardGame game, CancellationToken ct = default);
     Task<BoardGame?> GetByIdAsync(int id, CancellationToken ct = default);
+
+    Task<bool> ExistsAsync(int id);
 }
 

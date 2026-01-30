@@ -11,4 +11,9 @@ public sealed record Slug(string Value)
     }
 
     public override string ToString() => Value;
+
+    internal Slug From(string slug)
+    {
+        throw new NotImplementedException();
+    }
 }

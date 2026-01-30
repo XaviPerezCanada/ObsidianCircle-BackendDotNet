@@ -1,6 +1,6 @@
 using MiProyecto.Application.GameRooms.DTOs;
 using MiProyecto.Domain.GameRooms.Entities;
-using MiProyecto.Domain.GameRooms.Interfaces;
+using MiProyecto.Application.GameRooms.Interfaces;
 using MiProyecto.Domain.Common.Exceptions;
 using MiProyecto.Domain.Common.ValueObjects;
 using MiProyecto.Domain.BoardGames.Exceptions;
