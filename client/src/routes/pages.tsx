@@ -1,6 +1,5 @@
-import { HeroSection } from '@/components/hero-section'
-import { FeaturesSection } from '@/components/features-section'
-import { Footer } from '@/components/footer'
+import { HeroSection } from '@/src/components/layout/hero-section'
+import { Footer } from '@/src/components/layout/footer'
 import { SignForm } from '@/src/components/User/Login/SingForm'
 import { RegisterForm } from '@/src/components/User/Login/RegisterForm'
 
@@ -8,7 +7,6 @@ export function HomePage() {
   return (
     <main className="min-h-screen bg-background">
       <HeroSection />
-      <FeaturesSection />
       <Footer />
     </main>
   )

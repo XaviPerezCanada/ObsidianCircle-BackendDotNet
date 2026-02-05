@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using MiProyecto.Application.Common;
 using MiProyecto.Application.GameRooms.DTOs;
 using MiProyecto.Application.GameRooms.Services;
 using MiProyecto.Domain.Common.ValueObjects;
@@ -18,11 +19,57 @@ namespace MiProyecto.WebAPI.Controllers
             _slugGenerator = slugGenerator;
         }
 
+        /// <summary>
+        /// Lista todas las salas (visible en Swagger).
+        /// </summary>
+        /// <response code="200">Lista de salas.</response>
         [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<GameRoomDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<GameRoomDto>>> GetAll()
         {
             var rooms = await _service.GetAllRoomsAsync();
             return Ok(rooms);
+        }
+
+        /// <summary>
+        /// Búsqueda paginada: ?q=texto&amp;capacity=20 (o capacity=4,6,8)&amp;sort=nombre_asc|nombre_desc&amp;page=1&amp;limit=10
+        /// capacity en la URL siempre llega como string (ej. "20" o "4,6,8").
+        /// </summary>
+        /// <response code="200">Resultado paginado con items, page, pageSize, totalCount.</response>
+        [HttpGet("search")]
+        [ProducesResponseType(typeof(PagedResult<GameRoomDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PagedResult<GameRoomDto>>> Search(
+            [FromQuery] string? q,
+            [FromQuery] string? capacity,
+            [FromQuery] string? sort,
+            [FromQuery] int page = 1,
+            [FromQuery] int limit = 10)
+        {
+            // Parsear capacity desde string: "20" -> [20], "4,6,8" -> [4,6,8]
+            List<int>? capacityList = null;
+            if (!string.IsNullOrWhiteSpace(capacity))
+            {
+                capacityList = capacity!
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Select(s => int.TryParse(s.Trim(), out var n) ? n : (int?)null)
+                    .Where(n => n.HasValue)
+                    .Select(n => n!.Value)
+                    .ToList();
+                if (capacityList.Count == 0)
+                    capacityList = null;
+            }
+
+            var p = new GameRoomSearchParams
+            {
+                Q = q,
+                Capacity = capacityList,
+                Sort = sort,
+                Page = page < 1 ? 1 : page,
+                Limit = limit < 1 ? 10 : (limit > 50 ? 50 : limit)
+            };
+
+            var result = await _service.SearchAsync(p);
+            return Ok(result);
         }
 
         [HttpGet("available")]

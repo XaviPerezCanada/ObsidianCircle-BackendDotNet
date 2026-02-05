@@ -1,9 +1,10 @@
+using MiProyecto.Application.Common;
 using MiProyecto.Application.GameRooms.DTOs;
-using MiProyecto.Domain.GameRooms.Entities;
 using MiProyecto.Application.GameRooms.Interfaces;
+using MiProyecto.Domain.BoardGames.Exceptions;
 using MiProyecto.Domain.Common.Exceptions;
 using MiProyecto.Domain.Common.ValueObjects;
-using MiProyecto.Domain.BoardGames.Exceptions;
+using MiProyecto.Domain.GameRooms.Entities;
 
 
 namespace MiProyecto.Application.GameRooms.Services
@@ -46,6 +47,18 @@ namespace MiProyecto.Application.GameRooms.Services
             return rooms.Select(r =>
                 new GameRoomDto(r.Id, r.Name, r.Slug, r.Capacity, r.Status.ToString(), r.Description)
             );
+        }
+
+        /// <summary>
+        /// Búsqueda paginada de salas por texto, capacidad y ordenación.
+        /// </summary>
+        public async Task<PagedResult<GameRoomDto>> SearchAsync(GameRoomSearchParams p)
+        {
+            var paged = await _repository.SearchAsync(p);
+            var items = paged.Items
+                .Select(r => new GameRoomDto(r.Id, r.Name, r.Slug, r.Capacity, r.Status.ToString(), r.Description))
+                .ToList();
+            return new PagedResult<GameRoomDto>(items, paged.Page, paged.PageSize, paged.TotalCount);
         }
        
 

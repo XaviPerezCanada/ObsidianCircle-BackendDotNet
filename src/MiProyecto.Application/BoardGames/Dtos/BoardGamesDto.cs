@@ -1,10 +1,11 @@
-﻿using MiProyecto.Domain.BoardGames.Enums;
+using MiProyecto.Domain.BoardGames.Enums;
 
 namespace MiProyecto.Application.BoardGames.Dtos
 {
     public record BoardGameDto(
         int Id,
         string Titulo,
+        string Slug,
         string Socio,
         string Editorial,
         string Genero,
@@ -12,12 +13,14 @@ namespace MiProyecto.Application.BoardGames.Dtos
         int JugadoresMax,
         int EdadRecomendada,
         int DuracionMinutos,
+        string Categoria,
         string Ubicacion,
         string Idioma,
         string ImagenUrl,
         string Observaciones,
         PhysicalStatus Estado,
         LoanStatus Disponibilidad,
-        DateTime FechaRegistro
+        DateTime FechaRegistro,
+        DateTime FechaUltimaModificiacion
     );
 }

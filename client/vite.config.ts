@@ -5,6 +5,7 @@ import path from 'path'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  base: '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './'),
@@ -12,12 +13,13 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    strictPort: false,
+    // Proxy API al backend .NET (debe estar en marcha en el puerto 5222)
     proxy: {
       '/api': {
-        target: 'http://localhost:5222',
+        target: 'http://127.0.0.1:5222',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '/api'),
       },
     },
   },

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Shield, Mail, Lock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/src/components/ui/button";
+import { Input } from "@/src/components/ui/input";
+import { Label } from "@/src/components/ui/label";
 import { useLogin } from "@/src/hooks/useAuth";
 import {
   Card,
@@ -11,7 +11,7 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from "@/components/ui/card";
+} from "@/src/components/ui/card";
 
 type SignFormProps = {
   onSuccess?: () => void;

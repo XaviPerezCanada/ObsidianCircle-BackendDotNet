@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import type { AuthResponse, AuthUser, LoginRequest, RegisterRequest } from '@/src/services/auth.service'
 import { authService } from '@/src/services/auth.service'
 import { authStore } from '@/src/lib/auth-store'
-import { toast } from '@/components/ui/use-toast'
+import { toast } from '@/src/components/ui/use-toast'
 
 type AuthState = {
   accessToken: string | null

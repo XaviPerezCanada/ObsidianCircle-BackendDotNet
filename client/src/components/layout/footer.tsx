@@ -11,7 +11,7 @@ export function Footer() {
             REALM OF LEGENDS
           </span>
         </div>
-
+   TODO
         {/* Links */}
         <div className="flex items-center gap-6 text-sm text-muted-foreground">
           <a href="#" className="hover:text-foreground transition-colors">

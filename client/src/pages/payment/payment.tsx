@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/src/context/auth-context";
-import { Card, CardHeader, CardTitle, CardFooter, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardFooter, CardContent } from "@/src/components/ui/card";
+import { Button } from "@/src/components/ui/button";
 import {
     Field,
     FieldDescription,
     FieldLabel,
     FieldLegend,
     FieldSet,
-  } from "@/components/ui/field"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+  } from "@/src/components/ui/field"
+import { RadioGroup, RadioGroupItem } from "@/src/components/ui/radio-group"
 import { usePlan } from "@/src/hooks/usePlan";
 import { subscriptionService } from "@/src/services/subscription.service";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/src/components/ui/use-toast";
 
 export function PaySubscriptionPage() {
     const { isAuthenticated, refreshUser } = useAuth();

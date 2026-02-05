@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/src/components/ui/button";
 import { Menu, X, ShipWheel } from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Avatar, AvatarImage, AvatarFallback } from "@/src/components/ui/avatar";
+import { Dialog, DialogContent } from "@/src/components/ui/dialog";
 import { SignForm } from "@/src/components/User/Login/SingForm";
 import { RegisterForm } from "@/src/components/User/Login/RegisterForm";
 import { useAuth } from "@/src/context/auth-context";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/src/components/ui/use-toast";
 
 const navLinks = [
-  { label: "Aventuras", href: "#features" },
+  { label: "Aventuras", href: "/shop" },
   // La URL real para "Hoja de Personaje" se decide en función de si el usuario está logueado
   { label: "Hoja de Personaje", href: "#bestiary" },
   { label: "Comunidad", href: "#community" },

@@ -31,7 +31,7 @@ builder.Services.AddCors(options =>
     {
         if (builder.Environment.IsDevelopment())
         {
-            // En desarrollo, permitir cualquier origen localhost
+           
             policy.WithOrigins(
                     "http://localhost:5173",
                     "http://localhost:3000",
@@ -87,6 +87,7 @@ builder.Services.AddScoped<ISqlUnitOfWork, SqlUnitOfWork>();
 builder.Services.AddScoped<IPgUnitOfWork, PgUnitOfWork>();
 
 builder.Services.AddScoped<IBoardGameRepository, BoardGameRepository>();
+builder.Services.AddScoped<MiProyecto.Application.BoardGames.Services.BoardGameService>();
 builder.Services.AddScoped<IGameRoomRepository, GameRoomRepository>();
 builder.Services.AddScoped<IUserHandler, UserHandler>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();

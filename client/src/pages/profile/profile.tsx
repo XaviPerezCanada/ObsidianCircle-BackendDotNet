@@ -1,21 +1,9 @@
 
 import { useAuth } from "@/src/context/auth-context";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/src/components/ui/card";
+import { Button } from "@/src/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
-
-
-
-export function ProfilePage() {
-  const { user, isAuthenticated ,logout} = useAuth();
-  const navigate = useNavigate();
- 
-
-
- 
-  // esto son los juegos que el usuario tiene a futuro los pillara de la base de datos
-  
   return (
     isAuthenticated ? (
     <div className="pt-20 px-6 pb-6 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/Taberna.png')" }}>

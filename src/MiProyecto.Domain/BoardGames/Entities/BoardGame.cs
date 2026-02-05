@@ -28,7 +28,7 @@ namespace MiProyecto.Domain.BoardGames.Entities
         public string Ubicacion { get; private set; } = string.Empty;
         public string Idioma { get; private set; } = "Español";
 
-    
+        public string Categoria { get; private set; } = string.Empty;
 
         public string ImagenUrl { get; private set; } = string.Empty;
         public string Observaciones { get; private set; } = string.Empty;
@@ -37,6 +37,8 @@ namespace MiProyecto.Domain.BoardGames.Entities
         public LoanStatus Disponibilidad { get; private set; } = LoanStatus.Disponible;
 
         public DateTime FechaRegistro { get; private set; } = DateTime.UtcNow;
+        public DateTime FechaUltimaModificacion { get; private set; } = DateTime.UtcNow;
+
 
         protected BoardGame() { }
 

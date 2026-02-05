@@ -1,5 +1,12 @@
 import { api } from '@/src/lib/api'
 
+/** Tipo genérico para resultados paginados del backend */
+export type PagedResult<T> = {
+  items: T[]
+  page: number
+  pageSize: number
+  totalCount: number
+}
 
 export type GameRoom = {
   id: string          
@@ -25,8 +32,21 @@ export type UpdateGameRoomRequest = {
   description: string
 }
 
-// Endpoint base: el controller tiene [Route("api/[controller]")] que genera "api/GameRooms"
-// .NET convierte el nombre del controller a camelCase en las rutas
+/** Parámetros de búsqueda para salas */
+export type GameRoomSearchParams = {
+
+  q?: string
+
+  capacity?: number[] | string
+
+  sort?: string
+
+  page?: number
+
+  limit?: number
+}
+
+
 const ENDPOINT = '/GameRooms' 
 
 export const gameRoomService = {
@@ -45,6 +65,35 @@ export const gameRoomService = {
   // GET /api/GameRooms/{slug}
   getBySlug: async (slug: string) => {
     const res = await api.get<GameRoom>(`${ENDPOINT}/${encodeURIComponent(slug)}`)
+    return res.data
+  },
+
+  /**
+   * Búsqueda paginada con filtros
+   * @param params Parámetros de búsqueda (q, capacity, sort, page, limit)
+   * @returns Resultado paginado con items, page, pageSize, totalCount
+   */
+  search: async (params: GameRoomSearchParams = {}) => {
+    const queryParams = new URLSearchParams()
+    
+    if (params.q) queryParams.append('q', params.q)
+    
+    // Manejar capacity: puede ser array [4,6,8] o string "4,6,8"
+    if (params.capacity !== undefined) {
+      const capacityStr = Array.isArray(params.capacity) 
+        ? params.capacity.join(',') 
+        : params.capacity
+      queryParams.append('capacity', capacityStr)
+    }
+    
+    if (params.sort) queryParams.append('sort', params.sort)
+    if (params.page !== undefined) queryParams.append('page', params.page.toString())
+    if (params.limit !== undefined) queryParams.append('limit', params.limit.toString())
+
+    const queryString = queryParams.toString()
+    const url = `${ENDPOINT}/search${queryString ? `?${queryString}` : ''}`
+    
+    const res = await api.get<PagedResult<GameRoom>>(url)
     return res.data
   },
 

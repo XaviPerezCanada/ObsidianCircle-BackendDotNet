@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { userService, type CatalogUser } from '@/src/services/user.service'
 import { type GameRoom } from '@/src/services/sala.service'
-import { reservaService, type Reserva } from '@/src/services/reserva.service'
+import { reservationService, type Reserva } from '@/src/services/reservation.service'
 import { planService, type Plan } from '@/src/services/plan.service'
 import { gameRoomQueries } from '@/src/pages/admin/queries/queriesGameRooms'
 
@@ -28,7 +28,7 @@ export function useDashboard() {
       const [u, s, r, p] = await Promise.allSettled([
         userService.getAll(),
         gameRoomQueries.getAll(), // Usar query en lugar del servicio directo
-        reservaService.getAll(),
+        reservationService.getAll(),
         planService.getAll(),
       ])
       

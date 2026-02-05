@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Spinner } from '@/components/ui/spinner'
-import { Footer } from '@/components/footer'
+import { Footer } from '@/src/components/layout/footer'
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -34,7 +34,7 @@ import {
   AlertTriangle
 } from 'lucide-react'
 import { gameRoomCommands } from '@/src/pages/admin/command/commandGameRooms'
-import { gameRoomQueries } from '@/src/pages/admin/queries/queriesGameRooms'
+// import { gameRoomQueries } from '@/src/pages/admin/queries/queriesGameRooms'
 import { GameRoomFormDialog } from './components/GameRoomFormDialog'
 import type { GameRoom } from '@/src/services/sala.service'
 import { toast } from '@/src/hooks/use-toast'

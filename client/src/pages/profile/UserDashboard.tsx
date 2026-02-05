@@ -1,13 +1,13 @@
 import { useAuth } from "@/src/context/auth-context";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/src/components/ui/button";
 import { AddArticle } from "@/src/components/profile/AddArticle";
 import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/src/components/ui/card";
+import { Dialog, DialogContent } from "@/src/components/ui/dialog";
 import { useJuego } from "@/src/hooks/useJuego";
 import { Dice6, BookOpen } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/src/components/ui/badge";
 
 export function UserDashboard() {
   const { user } = useAuth();
@@ -43,7 +43,7 @@ export function UserDashboard() {
   }
 
   // Filtrar solo los juegos que pertenecen al usuario autenticado
-  const misJuegos = juegos.filter(juego => juego.propietario_id === user.id);
+  const misJuegos = juegos.filter(juego => juego.socio === user.socio);
 
   return (
     <div className="pt-20 px-6 pb-6 content-center justify-center flex-row gap-4 items-center" >
