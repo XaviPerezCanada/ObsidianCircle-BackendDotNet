@@ -48,4 +48,7 @@ import { useNavigate } from "react-router-dom";
     </div>
   )
   );
-}
+
+
+
+export default ProfilePage;

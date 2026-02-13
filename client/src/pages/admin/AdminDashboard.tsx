@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useDashboard } from '@/src/hooks/useDashboard'
 import { useAuth } from "@/src/context/auth-context";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Spinner } from '@/components/ui/spinner'
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/src/components/ui/table'
+import { Input } from '@/src/components/ui/input'
+import { Button } from '@/src/components/ui/button'
+import { Badge } from '@/src/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs'
+import { Spinner } from '@/src/components/ui/spinner'
 import { Footer } from '@/src/components/layout/footer'
 import { 
   DropdownMenu, 
@@ -14,7 +14,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuSeparator,
   DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu'
+} from '@/src/components/ui/dropdown-menu'
 import { 
   Dialog, 
   DialogContent, 
@@ -22,7 +22,7 @@ import {
   DialogFooter, 
   DialogHeader, 
   DialogTitle 
-} from '@/components/ui/dialog'
+} from '@/src/components/ui/dialog'
 import { 
   Edit, 
   MoreVertical, 

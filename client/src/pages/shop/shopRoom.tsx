@@ -1,26 +1,20 @@
 import { useRef } from "react";
-import { useJuegoSearch } from "@/src/hooks/useJuegoSearch";
-import JuegoSearchFilters from "./juego-search-filters";
-import CardCarousel from "./card-carousel";
+import { useGameRoomSearch } from "@/src/hooks/useGameRoomSearch";
+import GameRoomSearchFilters from "./components/game-room-search-filters";
+import CardGameRooms from "./components/cardGameRooms";
 import {
   Pagination,
   PaginationContent,
   PaginationItem,
-  PaginationLink,
   PaginationNext,
   PaginationPrevious,
 } from "@/src/components/ui/pagination";
 
-/** Número de cartas por página (el backend admite hasta 50). */
-const CARDS_PER_PAGE = 4;
+const ROOMS_PER_PAGE = 4;
 
-/**
- * Componente que combina filtros de búsqueda y grid de cartas de juegos.
- * Usa los mismos filtros para pintar el CardCarousel (sin el carrusel destacado de CarrouselList).
- */
-export default function ShopFilteredGrid() {
+export default function ShopRoom() {
   const {
-    juegos,
+    gameRooms,
     loading,
     error,
     totalCount,
@@ -28,34 +22,25 @@ export default function ShopFilteredGrid() {
     totalPages,
     nextPage,
     prevPage,
-    setPage,
     ...filterState
-  } = useJuegoSearch({}, { pageSize: CARDS_PER_PAGE });
+  } = useGameRoomSearch({}, { pageSize: ROOMS_PER_PAGE });
 
-  /** Referencia para el scroll de la sección de cartas de juegos */
+  const listSectionRef = useRef<HTMLElement | null>(null);
 
-  const cardsSectionRef = useRef<HTMLElement | null>(null);
-
-  const scrollToCards = () => {
-    if (!cardsSectionRef.current) return;
-
-    const rect = cardsSectionRef.current.getBoundingClientRect();
+  const scrollToList = () => {
+    if (!listSectionRef.current) return;
+    const rect = listSectionRef.current.getBoundingClientRect();
     const scrollTop = window.scrollY || window.pageYOffset;
-
-    // Ajusta este offset si tienes un header fijo más grande/pequeño
     const offset = 80;
-
-    const targetY = rect.top + scrollTop - offset;
-
     window.scrollTo({
-      top: targetY,
+      top: rect.top + scrollTop - offset,
       behavior: "smooth",
     });
   };
 
   return (
-    <div className="space-y-6">
-      <JuegoSearchFilters
+    <div className="space-y-6 max-w-7xl mx-auto px-4 py-6">
+      <GameRoomSearchFilters
         query={filterState.query}
         setQuery={filterState.setQuery}
         filters={filterState.filters}
@@ -67,22 +52,24 @@ export default function ShopFilteredGrid() {
 
       {loading && (
         <div className="py-12 text-center text-muted-foreground">
-          Cargando juegos...
+          Cargando salas...
         </div>
       )}
 
       {error && (
-        <div className="py-12 text-center text-destructive">
-          Error: {error}
-        </div>
+        <div className="py-12 text-center text-destructive">Error: {error}</div>
       )}
 
       {!loading && !error && (
-        <section className="space-y-4" ref={cardsSectionRef}>
+        <section className="space-y-4" ref={listSectionRef}>
           <h2 className="text-xl font-semibold mb-4">
-            Juegos {totalCount > 0 && `(${totalCount})`}
+            Salas {totalCount > 0 && `(${totalCount})`}
           </h2>
-          <CardCarousel juegos={juegos} />
+          <CardGameRooms
+            gameRooms={gameRooms}
+            loading={loading}
+            error={error}
+          />
 
           {totalPages > 1 && (
             <Pagination className="mt-6">
@@ -93,7 +80,7 @@ export default function ShopFilteredGrid() {
                     onClick={(e) => {
                       e.preventDefault();
                       prevPage();
-                      scrollToCards();
+                      scrollToList();
                     }}
                     aria-disabled={page <= 1}
                     className={page <= 1 ? "pointer-events-none opacity-50" : ""}
@@ -110,10 +97,12 @@ export default function ShopFilteredGrid() {
                     onClick={(e) => {
                       e.preventDefault();
                       nextPage(totalPages);
-                      scrollToCards();
+                      scrollToList();
                     }}
                     aria-disabled={page >= totalPages}
-                    className={page >= totalPages ? "pointer-events-none opacity-50" : ""}
+                    className={
+                      page >= totalPages ? "pointer-events-none opacity-50" : ""
+                    }
                   />
                 </PaginationItem>
               </PaginationContent>

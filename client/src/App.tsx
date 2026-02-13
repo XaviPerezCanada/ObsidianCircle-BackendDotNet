@@ -7,6 +7,9 @@ import { ProtectedRoute, PublicRoute } from '@/src/routes/guards'
 import { Navbar } from '@/src/components/layout/navbar'
 import { Toaster } from '@/src/components/ui/toaster'
 import { Skeleton } from '@/src/components/ui/skeleton'
+import ShopGames from './pages/shop/shopGames'
+import ShopEvents from './pages/shop/shopEvents'
+import ShopRoom from './pages/shop/shopRoom'
 
 // Lazy: solo se cargan cuando se visita la ruta
 const HomePage = lazy(() =>
@@ -30,7 +33,8 @@ const PaySubscriptionPage = lazy(() =>
 const AdminDashboard = lazy(() =>
   import('@/src/pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard }))
 )
-const Shop = lazy(() => import('./pages/shop/shop'))
+const Shop = lazy(() => import('./pages/shop/shopGames'))
+const DetailsReservation = lazy(() => import('./pages/detailsReservartion/detailsReservation'))
 
 /** Fallback genérico mientras carga cualquier página lazy */
 function PageFallback() {
@@ -79,6 +83,13 @@ function App() {
                   </Route>
 
                   <Route path="/shop" element={<Shop />} />
+                  <Route path="/shop/games" element={<ShopGames />} />
+                  <Route path="/shop/events" element={<ShopEvents />} />
+                  <Route path="/shop/rooms" element={<ShopRoom />} />
+
+                  {/* Temporalmente pública para debug - cambiar a ProtectedRoute después */}
+                  <Route path="/reservation" element={<DetailsReservation />} />
+                  <Route path="/detailsReservation" element={<DetailsReservation />} />
 
                   <Route path="/admin-dashboard" element={<AdminDashboard />} />
                 </Routes>

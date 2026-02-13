@@ -2,7 +2,7 @@ import type { Juego } from "@/src/services/juego.service";
 import { Card, CardContent, CardHeader } from "@/src/components/ui/card";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
-import { Map } from "lucide-react";
+import { UsersIcon, UsersRound, CalendarDays } from "lucide-react";
 
 type CardCarouselProps = {
   juegos: Juego[];
@@ -59,7 +59,7 @@ export default function CardCarousel({ juegos }: CardCarouselProps) {
             ) : null}
             {(juego.jugadoresMin != null || juego.jugadoresMax != null) && (
               <p className="text-xs text-muted-foreground mt-2">
-                {juego.jugadoresMin ?? "?"}–{juego.jugadoresMax ?? "?"} jugadores
+                {juego.jugadoresMin ?? "?"}–{juego.jugadoresMax ?? "?"} <UsersRound className="w-4 h-4" />
               </p>
             )}
           
@@ -67,7 +67,12 @@ export default function CardCarousel({ juegos }: CardCarouselProps) {
           <Button variant="outline" className="w-75 mt-2 hover:bg-primary/10" onClick={() => {
             // navigate(`/shop/${juego.slug}`);
           }}>
-            <Map className="w-4 h-4" /> Ver partidas abiertas
+            <UsersIcon className="w-4 h-4" /> Ver partidas abiertas
+          </Button>
+          <Button variant="outline" className="w-75 mt-2 hover:bg-primary/10" onClick={() => {
+            // navigate(`/shop/${juego.slug}`);
+          }}>
+            <CalendarDays className="w-4 h-4" /> Realizar una reserva para este juego
           </Button>
           
             
