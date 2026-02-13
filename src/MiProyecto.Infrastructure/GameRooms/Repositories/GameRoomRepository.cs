@@ -73,12 +73,12 @@ namespace MiProyecto.Infrastructure.GameRooms.Repositories
                     (x.Description != null && x.Description.ToLower().Contains(like)));
             }
 
-            // Filtro por capacidad (traducción explícita a SQL para evitar problemas con Contains)
+            // Filtro por capacidad: un solo valor = salas con esa capacidad o más (>=)
             if (p.Capacity?.Any() == true)
             {
                 var capacityValues = p.Capacity.ToArray();
                 if (capacityValues.Length == 1)
-                    q = q.Where(x => x.Capacity == capacityValues[0]);
+                    q = q.Where(x => x.Capacity >= capacityValues[0]);
                 else
                     q = q.Where(x => capacityValues.Contains(x.Capacity));
             }

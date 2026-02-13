@@ -25,4 +25,12 @@ namespace MiProyecto.Application.Users
          string? Image
      );
 
+    public record UserProfileDto(
+        string Email,
+        string Username,
+        string Slug,
+        string Type,
+        string? Bio,
+        string? Image
+    );
 }
