@@ -1,50 +1,54 @@
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using MiProyecto.Application;
 using MiProyecto.Application.BoardGames.Interfaces;
-using MiProyecto.Application.Interfaces;
-using MiProyecto.Application.Users;
-using MiProyecto.Domain.Common.ValueObjects;
 using MiProyecto.Application.GameRooms.Interfaces;
+using MiProyecto.Application.Interfaces;
+using MiProyecto.Application.Reservations.Interfaces;
+using MiProyecto.Application.Users.Mapping;
+using MiProyecto.Application.Users.Services;
+using MiProyecto.Application.Users.Validation;
+using MiProyecto.Domain.Common.ValueObjects;
+using MiProyecto.Domain.Security;
+using MiProyecto.Domain.Users.Interfaces;
+using MiProyecto.Infrastructure.Users.Repositories;
 using MiProyecto.Infrastructure.BoardGames.Repositories;
 using MiProyecto.Infrastructure.Common;
 using MiProyecto.Infrastructure.GameRooms.Repositories;
 using MiProyecto.Infrastructure.Persistence.UnitOfWork;
-using MiProyecto.Infrastructure.Users;
-using MiProyecto.WebApi.Middleware;
-using MiProyecto.Application.Reservations.Interfaces;
 using MiProyecto.Infrastructure.Reservations.Repositories;
+using MiProyecto.Infrastructure.Security;
+using MiProyecto.WebApi.Middleware;
+using System.Text;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        // Configurar serialización JSON para usar camelCase (compatible con JavaScript/TypeScript)
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        options.JsonSerializerOptions.WriteIndented = true; // Opcional: para desarrollo
+        options.JsonSerializerOptions.WriteIndented = true;
     });
 
+// --- CONFIGURACIÃ“N DE CORS ---
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
         if (builder.Environment.IsDevelopment())
         {
-           
-            policy.WithOrigins(
-                    "http://localhost:5173",
-                    "http://localhost:3000",
-                    "http://127.0.0.1:5173",
-                    "http://127.0.0.1:3000"
-                )
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials();
+            policy.WithOrigins("http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
         }
         else
         {
-            // En producción, solo permitir orígenes específicos
             policy.WithOrigins("https://tu-dominio.com")
                   .AllowAnyHeader()
                   .AllowAnyMethod()
@@ -53,72 +57,96 @@ builder.Services.AddCors(options =>
     });
 });
 
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// --- FLUENTVALIDATION ---
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddFluentValidationClientsideAdapters();
+builder.Services.AddValidatorsFromAssemblyContaining<NewUserDtoValidator>();
+
+// --- AUTOMAPPER ---
+builder.Services.AddAutoMapper(typeof(UserMappingProfile).Assembly); 
+
+// --- CONFIGURACIÃ“N DE JWT Y AUTENTICACIÃ“N ---
+builder.Services.Configure<JwtIssuerOptions>(
+    builder.Configuration.GetSection("JwtIssuerOptions")
+);
+
+var jwtSettings = builder.Configuration.GetSection("JwtIssuerOptions").Get<JwtIssuerOptions>();
+
+var secretKey = jwtSettings?.SecretKey ?? "Clave_De_Seguridad_Temporal_De_32_Caracteres_Minimo";
+var keyBytes = Encoding.UTF8.GetBytes(secretKey);
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings?.Issuer ?? "TuProyectoAPI",
+            ValidAudience = jwtSettings?.Audience ?? "TuProyectoClient",
+            IssuerSigningKey = new SymmetricSecurityKey(keyBytes)
+        };
+    });
+
+// --- CONFIGURACIÃ“N DE BASES DE DATOS ---
 var sqlConn = builder.Configuration.GetConnectionString("DefaultConnection");
 var pgConn = builder.Configuration.GetConnectionString("PostgresConnection");
 
-if (string.IsNullOrWhiteSpace(sqlConn))
-    throw new Exception("Connection string 'DefaultConnection' no encontrada.");
-if (string.IsNullOrWhiteSpace(pgConn))
-    throw new Exception("Connection string 'PostgresConnection' no encontrada.");
+if (string.IsNullOrWhiteSpace(sqlConn) || string.IsNullOrWhiteSpace(pgConn))
+    throw new Exception("Faltan cadenas de conexiÃ³n en appsettings.json.");
 
-builder.Services.AddDbContext<SqlServerDbContext>(options => 
-    options.UseSqlServer(sqlConn, sqlOptions => 
-        sqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,
-            maxRetryDelay: TimeSpan.FromSeconds(30),
-            errorNumbersToAdd: null)));
+builder.Services.AddDbContext<SqlServerDbContext>(options =>
+    options.UseSqlServer(sqlConn));
+
 builder.Services.AddDbContext<PostgresDbContext>(options =>
-    options.UseNpgsql(pgConn, npgsqlOptions => {
-        // Habilitar reintentos
-        npgsqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,
-            maxRetryDelay: TimeSpan.FromSeconds(30),
-            errorCodesToAdd: null);
+    options.UseNpgsql(pgConn, npgsqlOptions =>
+        npgsqlOptions.MigrationsAssembly("MiProyecto.Infrastructure")));
 
-        // AQU? EST? LA MAGIA: Definimos d?nde viven las migraciones
-        npgsqlOptions.MigrationsAssembly("MiProyecto.Infrastructure");
-    }));
+
 builder.Services.AddSingleton<ISlugGenerator, DefaultSlugGenerator>();
-
 builder.Services.AddScoped<ISqlUnitOfWork, SqlUnitOfWork>();
 builder.Services.AddScoped<IPgUnitOfWork, PgUnitOfWork>();
-
 builder.Services.AddScoped<IBoardGameRepository, BoardGameRepository>();
 builder.Services.AddScoped<MiProyecto.Application.BoardGames.Services.BoardGameService>();
 builder.Services.AddScoped<IGameRoomRepository, GameRoomRepository>();
-builder.Services.AddScoped<IUserHandler, UserHandler>();
+builder.Services.AddScoped<MiProyecto.Domain.Users.Interfaces.IUserRepository, MiProyecto.Infrastructure.Users.Repositories.UserRepository>();
+builder.Services.AddScoped<IAuthHandler, UserHandler>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
-
+builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
+builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+builder.Services.AddScoped<IRefreshSessionRepository, RefreshSessionRepository>();
+builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddApplicationServices();
 
 var app = builder.Build();
 
-// Crear la base de datos y las tablas si no existen (solo en desarrollo)
+
 if (app.Environment.IsDevelopment())
 {
     using (var scope = app.Services.CreateScope())
     {
         var pgContext = scope.ServiceProvider.GetRequiredService<PostgresDbContext>();
         pgContext.Database.Migrate();
-
     }
-
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// CORS debe estar ANTES de UseHttpsRedirection y otros middlewares
 app.UseCors("AllowReactApp");
-
 app.UseHttpsRedirection();
-
-// Middleware de manejo de excepciones global (debe ir antes de UseAuthorization)
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-app.UseAuthorization();
+app.UseAuthentication(); // Primero identifica al usuario
+app.UseAuthorization();  // Luego comprueba sus permisos
+
 app.MapControllers();
+
 app.Run();

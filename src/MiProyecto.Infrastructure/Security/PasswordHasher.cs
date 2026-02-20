@@ -1,23 +1,27 @@
-﻿using System.Security.Cryptography;
-using System.Text;
+using System.Security.Cryptography;
+using MiProyecto.Domain.Security;
 
-namespace MiProyecto.Infrastructure.Security
+namespace MiProyecto.Infrastructure.Security;
+
+public class PasswordHasher : IPasswordHasher
 {
-    public class PasswordHasher : IPasswordHasher
+    private const int Iterations = 350000;
+    private const int KeySize = 64;
+    private readonly HashAlgorithmName _algorithm = HashAlgorithmName.SHA512;
+
+    // Antes se llamaba 'Hash', ahora debe ser 'HashAsync' para coincidir con la interfaz
+    public async Task<byte[]> HashAsync(string password, byte[] salt)
     {
-        private readonly HMACSHA512 x = new(Encoding.UTF8.GetBytes("realworld"));
-
-        public Task<byte[]> Hash(string password, byte[] salt)
-        {
-            var bytes = Encoding.UTF8.GetBytes(password);
-
-            var allBytes = new byte[bytes.Length + salt.Length];
-            Buffer.BlockCopy(bytes, 0, allBytes, 0, bytes.Length);
-            Buffer.BlockCopy(salt, 0, allBytes, bytes.Length, salt.Length);
-
-            return x.ComputeHashAsync(new MemoryStream(allBytes));
-        }
-
-        public void Dispose() => x.Dispose();
+        using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, Iterations, _algorithm);
+        return await Task.Run(() => pbkdf2.GetBytes(KeySize));
     }
+
+    // Este es el método nuevo que te pide el error
+    public byte[] GenerateSalt()
+    {
+        return RandomNumberGenerator.GetBytes(16);
+    }
+
+    // Si tu interfaz aún dice IDisposable, deja este método vacío:
+    public void Dispose() { }
 }

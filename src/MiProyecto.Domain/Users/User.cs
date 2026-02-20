@@ -2,85 +2,97 @@
 using MiProyecto.Domain.BoardGames.Exceptions;
 using MiProyecto.Domain.Common.ValueObjects;
 
+namespace MiProyecto.Domain.Users;
 
-namespace MiProyecto.Domain.Users
+public class User
 {
-    public class User
+    public string Username { get; private set; } = default!;
+    public Slug Slug { get; private set; } = default!;
+    public string Email { get; private set; } = default!;
+    public byte[] PasswordHash { get; private set; } = default!;
+    public byte[] Salt { get; private set; } = default!;
+    public string Bio { get; private set; } = string.Empty;
+    public string Image { get; private set; } = string.Empty;
+    public DateTime CreatedAt { get; private set; }
+    public DateTime? ModifiedAt { get; private set; }
+    public Status Status { get; private set; }
+    public UserType Type { get; private set; } = UserType.Basico;
+    public int SessionVersion { get; private set; } = 1;
+    public bool IsAvailable => Status.IsActive;
+
+    // Constructor para EF / Rehidratación
+    protected User() { }
+
+    // Constructor principal: ahora pide el objeto Slug directamente
+    public User(
+        string username,
+        Slug slug,
+        string email,
+        byte[] passwordHash, 
+        byte[] salt,         
+        string bio,
+        string image,
+        UserType type)
     {
-   
-        public string Username { get; set; } = default!;
-        public Slug Slug { get; private set; } = default!;
-
-        public string Email { get; set; } = default!;
-
-        public string Password { get; set; } = default!;
-
-        public string Bio { get; set; } = string.Empty;
-
-        public string Image { get; set; } = string.Empty;
-
-        public DateTime CreatedAt { get; private set; }
-        public DateTime? ModifiedAt { get; private set; }
-        public Status Status { get; private set; }
-
-        public UserType Type { get; private set; }
-
-        public bool IsAvailable => Status.IsActive;
-
-        protected User()
-        {
-
-            Status = Status.Active;
-        }
-
-        public User(
-             string username,
-             string slug,
-             string email,
-             string password,
-             string bio,
-             string image,
-             DateTime createdAt,
-             DateTime? modifiedAt,
-             Status status,
-             UserType type)
-                    {
-                    Username = username;
-                    SetSlug(slug);
-                    Email = email;
-                    Password = password;
-                    Bio = bio;
-                    Image = image;
-                    CreatedAt = createdAt;
-                    ModifiedAt = modifiedAt;
-                    Status = Status.Active; 
-                    Type = type;
-                }
-
-
-        public void Deactivate()
-        {
-            if (Status.IsInactive) return;
-
-            Status = Status.Inactive;
-            UpdateModifiedAt();
-        }
-
-        public void Activate()
-        {
-            // Usamos la propiedad de tu Value Object para chequear
-            if (Status.IsActive) return;
-
-            Status = Status.Active;
-            UpdateModifiedAt();
-        }
-
-        private void SetSlug(string slug)
-        {
-            Slug = Slug.From(slug); // la validación vive en el VO
-        }
-
-        private void UpdateModifiedAt() => ModifiedAt = DateTime.UtcNow;
+        Username = username;
+        Slug = slug ?? throw new ArgumentNullException(nameof(slug));
+        Email = email;
+        PasswordHash = passwordHash;
+        Salt = salt;
+        Bio = bio;
+        Image = image;
+        CreatedAt = DateTime.UtcNow;
+        Status = Status.Active;
+        Type = type;
     }
 
+    // El Factory Method que usa tu Mapper
+    public static User CreateBasic(string username, string email, byte[] passwordHash, byte[] salt)
+    {
+        
+        var slugValue = username.ToLower().Trim().Replace(" ", "-");
+        
+        return new User(
+            username: username,
+            slug: new Slug(slugValue), 
+            email: email,
+            passwordHash: passwordHash,
+            salt: salt,
+            bio: string.Empty,
+            image: string.Empty,
+            type: UserType.Basico
+        );
+    }
+
+    public void SetPassword(byte[] hash, byte[] salt)
+    {
+        if (hash == null || hash.Length == 0 || salt == null || salt.Length == 0)
+            throw new DomainException("El hash y el salt no pueden estar vacíos.");
+
+        PasswordHash = hash;
+        Salt = salt;
+        UpdateModifiedAt();
+    }
+
+    public void Deactivate()
+    {
+        if (Status.IsInactive) return;
+        Status = Status.Inactive;
+        UpdateModifiedAt();
+    }
+
+    public void Activate()
+    {
+        if (Status.IsActive) return;
+        Status = Status.Active;
+        UpdateModifiedAt();
+    }
+
+    public void IncrementSessionVersion()
+    {
+        SessionVersion++;
+        UpdateModifiedAt();
+    }
+
+    private void UpdateModifiedAt() => ModifiedAt = DateTime.UtcNow;
 }

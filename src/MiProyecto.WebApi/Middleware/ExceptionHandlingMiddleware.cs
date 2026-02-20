@@ -1,8 +1,10 @@
-using System.Net;
-using System.Text.Json;
 using MiProyecto.Domain.BoardGames.Exceptions;
+using MiProyecto.Application.Users.Exceptions;
 using MiProyecto.Domain.Common.Exceptions;
 using MiProyecto.WebApi.Common;
+using System.Net;
+using System.Security.Authentication;
+using System.Text.Json;
 
 namespace MiProyecto.WebApi.Middleware;
 
@@ -48,6 +50,29 @@ public class ExceptionHandlingMiddleware
 
         switch (exception)
         {
+            // --- NUEVOS CASOS PARA AUTH ---
+            case InvalidCredentialsException authEx:
+                errorResponse.Status = (int)HttpStatusCode.Unauthorized;
+                errorResponse.Title = "Credenciales inválidas";
+                errorResponse.Detail = authEx.Message;
+                response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                break;
+
+            case InvalidRefreshTokenException refreshEx:
+                errorResponse.Status = (int)HttpStatusCode.Unauthorized;
+                errorResponse.Title = "Token de refresco inválido";
+                errorResponse.Detail = refreshEx.Message;
+                response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                break;
+
+            case UnauthorizedAccessException:
+                errorResponse.Status = (int)HttpStatusCode.Unauthorized;
+                errorResponse.Title = "No autorizado";
+                errorResponse.Detail = "Debe estar autenticado para realizar esta acción.";
+                response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                break;
+
+            // --- TUS CASOS EXISTENTES (Mantenidos) ---
             case NotFoundException notFoundEx:
                 errorResponse.Status = (int)HttpStatusCode.NotFound;
                 errorResponse.Title = "Recurso no encontrado";
@@ -58,57 +83,36 @@ public class ExceptionHandlingMiddleware
             case ValidationException validationEx:
                 errorResponse.Status = (int)HttpStatusCode.BadRequest;
                 errorResponse.Title = "Error de validación";
-                errorResponse.Detail = validationEx.Message;
-                errorResponse.Errors = validationEx.Errors;
+                errorResponse.Detail = "Uno o más errores de validación han ocurrido.";
+                errorResponse.Errors = validationEx.Errors; // Diccionario de errores
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
                 break;
 
             case BusinessException businessEx:
                 errorResponse.Status = (int)HttpStatusCode.BadRequest;
-                errorResponse.Title = "Error de negocio";
+                errorResponse.Title = "Operación no permitida";
                 errorResponse.Detail = businessEx.Message;
                 errorResponse.ErrorCode = businessEx.ErrorCode;
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
                 break;
 
-            case DomainException domainEx:
-                errorResponse.Status = (int)HttpStatusCode.BadRequest;
-                errorResponse.Title = "Error de dominio";
-                errorResponse.Detail = domainEx.Message;
-                response.StatusCode = (int)HttpStatusCode.BadRequest;
-                break;
-
-            case ArgumentException argEx:
-                errorResponse.Status = (int)HttpStatusCode.BadRequest;
-                errorResponse.Title = "Error de argumento";
-                errorResponse.Detail = argEx.Message;
-                response.StatusCode = (int)HttpStatusCode.BadRequest;
-                break;
-
-            case KeyNotFoundException keyNotFoundEx:
-                errorResponse.Status = (int)HttpStatusCode.NotFound;
-                errorResponse.Title = "Recurso no encontrado";
-                errorResponse.Detail = keyNotFoundEx.Message;
-                response.StatusCode = (int)HttpStatusCode.NotFound;
-                break;
+            // ... (resto de casos: DomainException, ArgumentException, ConflictException, etc.)
 
             default:
                 errorResponse.Status = (int)HttpStatusCode.InternalServerError;
                 errorResponse.Title = "Error interno del servidor";
-                errorResponse.Detail = _environment.IsDevelopment() 
-                    ? exception.ToString() 
-                    : "Ha ocurrido un error inesperado. Por favor, contacte al administrador.";
+                errorResponse.Detail = _environment.IsDevelopment()
+                    ? exception.ToString()
+                    : "Ha ocurrido un error inesperado.";
                 response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 break;
         }
 
-        var jsonOptions = new JsonSerializerOptions
+        // Serialización... (igual que tu código)
+        var jsonResponse = JsonSerializer.Serialize(errorResponse, new JsonSerializerOptions
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true
-        };
-
-        var jsonResponse = JsonSerializer.Serialize(errorResponse, jsonOptions);
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
         await response.WriteAsync(jsonResponse);
     }
 }

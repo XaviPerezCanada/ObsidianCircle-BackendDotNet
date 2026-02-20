@@ -2,15 +2,18 @@ using Microsoft.EntityFrameworkCore;
 using MiProyecto.Domain.BoardGames.Entities;
 using MiProyecto.Domain.GameRooms.Entities;
 using MiProyecto.Domain.Reservation.Entities;
+using MiProyecto.Domain.Users;
 
 public class PostgresDbContext : DbContext
 {
     public PostgresDbContext(DbContextOptions<PostgresDbContext> options) : base(options) { }
 
+    public DbSet<User> Users { get; set; }
     public DbSet<BoardGame> BoardGames => Set<BoardGame>();
     public DbSet<GameRoom> GameRooms => Set<GameRoom>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
     public DbSet<ReservationBlock> ReservationBlocks => Set<ReservationBlock>();
+    public DbSet<RefreshSession> RefreshSessions { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -49,5 +52,8 @@ public class PostgresDbContext : DbContext
             b.HasKey(x => x.Id);
             b.HasIndex(x => x.Slug).IsUnique();
         });
+
+        // La configuración de User ahora está en UserConfiguration.cs
+        // que se aplica automáticamente mediante ApplyConfigurationsFromAssembly
     }
 }
