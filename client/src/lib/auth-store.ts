@@ -1,13 +1,9 @@
+import type { AuthUser } from '@/src/services/auth.service'
+
 /**
  * Store en memoria para el accessToken y user.
  * No usa localStorage, solo memoria durante la sesión del navegador.
  */
-type AuthUser = {
-  id: number
-  name: string
-  email: string
-  tipo?: 'BASICO' | 'SOCIO' | 'ADMIN'
-}
 
 let accessToken: string | null = null
 let user: AuthUser | null = null

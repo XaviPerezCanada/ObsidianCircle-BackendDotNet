@@ -7,19 +7,24 @@ export type LoginRequest = {
 }
 
 export type RegisterRequest = {
-  name: string
+  username: string
   email: string
   password: string
 }
 
 export type AuthUser = {
-  id: number
-  name: string
+  id?: number
+  username?: string
+  name?: string
   email: string
-  tipo?: 'BASICO' | 'SOCIO' | 'ADMIN'
+  slug?: string
+  type?: 'BASICO' | 'SOCIO' | 'ADMIN' | string
+  tipo?: 'BASICO' | 'SOCIO' | 'ADMIN' | string
+  bio?: string | null
+  image?: string | null
 }
 
-// Ajusta estos tipos a lo que devuelva tu backend
+
 export type AuthResponse = {
   accessToken?: string
   refreshToken?: string
@@ -29,16 +34,24 @@ export type AuthResponse = {
 
 export const authService = {
   register: async (data: RegisterRequest) => {
-    return await api.post<AuthResponse>('/usuarios/register', data)
+    // El backend espera directamente el objeto User en el cuerpo,
+    // no envuelto dentro de una propiedad Body.
+    return await api.post<AuthResponse>('/Auth/register', {
+      User: {
+        Username: data.username,
+        Email: data.email,
+        Password: data.password,
+      },
+    })
   },
   login: async (data: LoginRequest) => {
-    return await api.post<AuthResponse>('/usuarios/login', data)
+    return await api.post<AuthResponse>('/Auth/login', data)
   },
   refresh: async () => {
-    return await api.post<AuthResponse>('/auth/refresh')
+    return await api.post<AuthResponse>('/Auth/refresh')
   },
   logout: async () => {
-    return await api.post('/auth/logout')
+    return await api.post('/Auth/logout')
   },
 }
   

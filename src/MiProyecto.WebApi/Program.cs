@@ -42,7 +42,11 @@ builder.Services.AddCors(options =>
     {
         if (builder.Environment.IsDevelopment())
         {
-            policy.WithOrigins("http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173")
+            policy.WithOrigins(
+                      "http://localhost:5173",
+                      "https://localhost:5173",
+                      "http://localhost:3000",
+                      "http://127.0.0.1:5173")
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
@@ -69,7 +73,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<NewUserDtoValidator>();
 // --- AUTOMAPPER ---
 builder.Services.AddAutoMapper(typeof(UserMappingProfile).Assembly); 
 
-// --- CONFIGURACIÓN DE JWT Y AUTENTICACIÓN ---
+
 builder.Services.Configure<JwtIssuerOptions>(
     builder.Configuration.GetSection("JwtIssuerOptions")
 );

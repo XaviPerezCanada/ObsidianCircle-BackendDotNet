@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import type { AuthResponse, AuthUser, LoginRequest, RegisterRequest } from '@/src/services/auth.service'
 import { authService } from '@/src/services/auth.service'
 import { authStore } from '@/src/lib/auth-store'
+import { AUTH_SESSION_INVALID_EVENT } from '@/src/lib/api'
 import { toast } from '@/src/components/ui/use-toast'
 
 type AuthState = {
@@ -19,6 +20,41 @@ type AuthContextValue = AuthState & {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+function normalizeAuthUser(input: AuthUser | undefined | null): AuthUser | null {
+  if (!input) return null
+  const username = input.username ?? input.name
+  return {
+    ...input,
+    username,
+    name: input.name ?? username,
+    tipo: input.tipo ?? input.type,
+    type: input.type ?? input.tipo,
+  }
+}
+
+// Dedupe global del refresh inicial (evita doble llamada en React 18 StrictMode dev)
+let initialRefreshPromise: Promise<{ accessToken?: string; user?: AuthUser | null } | null> | null = null
+
+async function refreshOnceOnStartup() {
+  if (!initialRefreshPromise) {
+    initialRefreshPromise = authService
+      .refresh()
+      .then((res) => {
+        const data = res.data ?? null
+        if (!data) return null
+        return {
+          ...data,
+          user: normalizeAuthUser(data.user),
+        }
+      })
+      .catch((err) => {
+        initialRefreshPromise = null
+        throw err
+      })
+  }
+  return initialRefreshPromise
+}
+
 function extractTokens(payload: AuthResponse): {
   accessToken?: string
   refreshToken?: string
@@ -32,34 +68,56 @@ function extractTokens(payload: AuthResponse): {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  // Estado inicial vacío - no se usa localStorage
+  // Estado inicial vac?o - no se usa localStorage
   const [state, setState] = useState<AuthState>({
     accessToken: null,
     user: null,
   })
   const [isInitialized, setIsInitialized] = useState(false)
 
+  // Cuando el backend devuelve 401 (otro dispositivo, sesi?n inv?lida): actualizar estado y avisar al usuario
+  useEffect(() => {
+    const handleSessionInvalid = () => {
+      setState({ accessToken: null, user: null })
+      toast({
+        title: 'Sesi?n no v?lida',
+        description: 'Has iniciado sesi?n en otro dispositivo o tu sesi?n ha expirado. Inicia sesi?n de nuevo.',
+        variant: 'destructive',
+      })
+    }
+    window.addEventListener(AUTH_SESSION_INVALID_EVENT, handleSessionInvalid)
+    return () => window.removeEventListener(AUTH_SESSION_INVALID_EVENT, handleSessionInvalid)
+  }, [])
+
   // Al montar (incluye F5): llamar a /auth/refresh, guardar accessToken en memoria y poner user en el Context
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const res = await authService.refresh()
-        const { accessToken, user } = res.data ?? {}
+        const data = await refreshOnceOnStartup()
+        const { accessToken, user } = data ?? {}
         
         if (accessToken && user) {
-          // Guardar en store en memoria (no localStorage)
+          
           authStore.setAccessToken(accessToken)
           authStore.setUser(user)
           setState({ accessToken, user })
         } else {
-          // Si no hay datos, limpiar
+        
+          // Si no hay cookie/sesi?n, limpiar estado
           authStore.clear()
           setState({ accessToken: null, user: null })
         }
       } catch (error) {
-        // Si falla el refresh (no hay cookie o expiró), limpiar estado
-        authStore.clear()
-        setState({ accessToken: null, user: null })
+        // Si falla el refresh inicial pero YA ten?amos sesi?n en memoria, no la tires.
+        // (esto cubre casos raros de doble refresh/rotaci?n en dev)
+        const existingToken = authStore.getAccessToken()
+        const existingUser = authStore.getUser()
+        if (existingToken && existingUser) {
+          setState({ accessToken: existingToken, user: existingUser })
+        } else {
+          authStore.clear()
+          setState({ accessToken: null, user: null })
+        }
       } finally {
         setIsInitialized(true)
       }
@@ -73,21 +131,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await authService.logout()
     } catch (error) {
       // Continuar con el logout aunque falle la llamada al backend
-      console.error('Error al cerrar sesión en el backend:', error)
+      console.error('Error al cerrar sesi?n en el backend:', error)
     }
     // Limpiar store en memoria (no localStorage)
     authStore.clear()
     setState({ accessToken: null, user: null })
     toast({
-      title: 'Sesión cerrada',
-      description: 'Cerraste sesión correctamente',
+      title: 'Sesi?n cerrada',
+      description: 'Cerraste sesi?n correctamente',
     })
   }
 
   const login = async (data: LoginRequest) => {
     const res = await authService.login(data)
     const tokens = extractTokens(res.data ?? {})
-    const user = res.data?.user ?? null
+    const user = normalizeAuthUser(res.data?.user)
     
     // Guardar en store en memoria (no localStorage)
     // El refreshToken viene en cookie, no en el body
@@ -105,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (data: RegisterRequest) => {
     const res = await authService.register(data)
     const tokens = extractTokens(res.data ?? {})
-    const user = res.data?.user ?? null
+    const user = normalizeAuthUser(res.data?.user)
     
     // Guardar en store en memoria (no localStorage)
     // El refreshToken viene en cookie, no en el body
@@ -123,7 +181,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshUser = async () => {
     try {
       const res = await authService.refresh()
-      const { accessToken, user } = res.data ?? {}
+      const accessToken = res.data?.accessToken
+      const user = normalizeAuthUser(res.data?.user)
       
       if (accessToken && user) {
         authStore.setAccessToken(accessToken)
@@ -148,7 +207,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [state.accessToken, state.user],
   )
 
-  // No renderizar hasta que se haya intentado inicializar la autenticación
+  // No renderizar hasta que se haya intentado inicializar la autenticaci?n
   if (!isInitialized) {
     return null // o un componente de loading si prefieres
   }
@@ -158,7 +217,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext)
-  console.log(ctx)
   if (!ctx) throw new Error('useAuth debe usarse dentro de <AuthProvider>')
   return ctx
 }

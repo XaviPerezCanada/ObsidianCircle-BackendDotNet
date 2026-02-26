@@ -169,7 +169,7 @@ export function AdminDashboard() {
     }
   }
 
-  if (user?.user?.tipo === 'ADMIN') {
+  if (user?.user?.tipo !== 'ADMIN') {
     return (
       <>
       <main className="min-h-screen bg-background flex items-center justify-center px-6 pt-24 pb-24">
@@ -184,7 +184,7 @@ export function AdminDashboard() {
       </>
     )
   }
-  if(user?.user?.tipo !== 'BASICO' && user?.user?.tipo !== 'SOCIO'){
+  if(user?.user?.tipo === 'ADMIN'){
   return (
     <>
     <main className="min-h-screen bg-background px-6 pt-24 pb-24 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/Admin.png')" }}>

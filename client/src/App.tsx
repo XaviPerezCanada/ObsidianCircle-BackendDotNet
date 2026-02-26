@@ -21,9 +21,7 @@ const LoginPage = lazy(() =>
 const RegisterPage = lazy(() =>
   import('@/src/routes/pages').then(m => ({ default: m.RegisterPage }))
 )
-const ProfilePage = lazy(() =>
-  import('@/src/pages/profile/profile').then(m => ({ default: m.ProfilePage }))
-)
+const ProfilePage = lazy(() => import('@/src/pages/profile/profile'))
 const UserDashboard = lazy(() =>
   import('@/src/pages/profile/UserDashboard').then(m => ({ default: m.UserDashboard }))
 )
@@ -87,7 +85,7 @@ function App() {
                   <Route path="/shop/events" element={<ShopEvents />} />
                   <Route path="/shop/rooms" element={<ShopRoom />} />
 
-                  {/* Temporalmente pública para debug - cambiar a ProtectedRoute después */}
+                  {/* Temporalmente pública para debug - Mocked routes */}
                   <Route path="/reservation" element={<DetailsReservation />} />
                   <Route path="/detailsReservation" element={<DetailsReservation />} />
 

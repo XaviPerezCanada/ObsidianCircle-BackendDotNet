@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/src/components/ui/button";
 import { Menu, X, ShipWheel } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/src/components/ui/avatar";
@@ -13,6 +14,7 @@ const navLinks = [
   // La URL real para "Hoja de Personaje" se decide en función de si el usuario está logueado
   { label: "Hoja de Personaje", href: "#bestiary" },
   { label: "Comunidad", href: "#community" },
+  { label: "Admin", href: "/admin-dashboard" },
 ];
 
 export function Navbar() {
@@ -20,6 +22,15 @@ export function Navbar() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const { isAuthenticated, logout, user } = useAuth();
+
+  const visibleLinks = navLinks.filter((link) => {
+ 
+    if (link.label === "Admin") {
+      return isAuthenticated && user?.type === "ADMIN"; 
+    }
+   
+    return true;
+  })
 
   const handleLogout = () => {
     logout();
@@ -33,22 +44,24 @@ export function Navbar() {
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
       <nav className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
-        <a href="/" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2">
           < ShipWheel className="w-6 h-6 text-primary" />
           <span className="text-lg font-bold tracking-wide text-foreground">
             OBSIDIAN CIRCLE
           </span>
-        </a>
+        </Link>
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => {
+          {visibleLinks.map((link) => {
             const targetHref =
               link.label === "Hoja de Personaje" && isAuthenticated
                 ? "/profile"
                 : link.href;
 
-            return (
+            const isHashLink = targetHref.startsWith("#");
+
+            return isHashLink ? (
               <a
                 key={link.label}
                 href={targetHref}
@@ -56,6 +69,14 @@ export function Navbar() {
               >
                 {link.label}
               </a>
+            ) : (
+              <Link
+                key={link.label}
+                to={targetHref}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {link.label}
+              </Link>
             );
           })}
         </div>
@@ -67,11 +88,11 @@ export function Navbar() {
               <Avatar>
                 <AvatarImage src="https://github.com/shadcn.png" />
                 <AvatarFallback>
-                  {(user?.name ?? "OC").slice(0, 2).toUpperCase()}
+                  {(user?.username ?? "OC").slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <span className="text-sm text-foreground">
-                {user?.name ?? "Usuario"}
+                {user?.username ?? "Usuario"}
               </span>
             </div>
             <Button
@@ -119,13 +140,15 @@ export function Navbar() {
       {isOpen && (
         <div className="md:hidden bg-background border-b border-border">
           <div className="px-6 py-4 space-y-4">
-            {navLinks.map((link) => {
+            {visibleLinks.map((link) => {
               const targetHref =
                 link.label === "Hoja de Personaje" && isAuthenticated
                   ? "/profile"
                   : link.href;
 
-              return (
+              const isHashLink = targetHref.startsWith("#");
+
+              return isHashLink ? (
                 <a
                   key={link.label}
                   href={targetHref}
@@ -134,6 +157,15 @@ export function Navbar() {
                 >
                   {link.label}
                 </a>
+              ) : (
+                <Link
+                  key={link.label}
+                  to={targetHref}
+                  className="block text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  {link.label}
+                </Link>
               );
             })}
             <div className="pt-4 flex flex-col gap-2">

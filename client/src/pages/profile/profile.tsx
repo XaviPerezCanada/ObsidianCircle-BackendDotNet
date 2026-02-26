@@ -4,51 +4,56 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/src/comp
 import { Button } from "@/src/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
+export const ProfilePage = () => {
+  const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex content-center justify-center flex-row gap-4 pt-20">
+        <h1>No estás autenticado</h1>
+        <Button onClick={() => navigate("/login")}>Ir a Login</Button>
+      </div>
+    );
+  }
+
   return (
-    isAuthenticated ? (
-    <div className="pt-20 px-6 pb-6 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/Taberna.png')" }}>
+    <div
+      className="pt-20 px-6 pb-6 bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url('/images/Taberna.png')" }}
+    >
       <Card className="bg-card/50 backdrop-blur-sm border-border">
         <CardHeader>
           <CardTitle>Profile</CardTitle>
           <div className="flex content-center justify-center flex-row gap-4">
-                <Button>Editar Perfil</Button>
-                <Button>Cambiar Contraseña</Button> 
-                {user?.tipo === 'SOCIO' && (
-                  <Button onClick={() => navigate("/user-dashboard")}>Area Socio</Button>
-                )}
-                {user?.tipo === 'ADMIN' && (
-                  <Button onClick={() => navigate("/admin-dashboard")}>Area Admin</Button>
-                )}
-            </div>
+            <Button>Editar Perfil</Button>
+            <Button>Cambiar Contraseña</Button>
+            {user?.tipo === "SOCIO" && (
+              <Button onClick={() => navigate("/user-dashboard")}>Area Socio</Button>
+            )}
+            {user?.tipo === "ADMIN" && (
+              <Button onClick={() => navigate("/admin-dashboard")}>Area Admin</Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <p>Name: {user?.name}</p>
           <p>Email: {user?.email}</p>
           <p>Tipo de usuario: {user?.tipo}</p>
           <br />
-          {user?.tipo === 'BASICO' && (
+          {user?.tipo === "BASICO" && (
             <Button onClick={() => navigate("/pay-subscription")}>HAZTE SOCIO</Button>
           )}
         </CardContent>
-        
-        
-   
         <CardFooter>
-            <div className="flex content-center justify-center flex-row gap-4">
-                <Button onClick={logout}>Logout</Button>
-                <Button>Eliminar Cuenta</Button>
-            </div>
+          <div className="flex content-center justify-center flex-row gap-4">
+            <Button onClick={logout}>Logout</Button>
+            <Button>Eliminar Cuenta</Button>
+          </div>
         </CardFooter>
       </Card>
     </div>
-  ) : (
-    <div className="flex content-center justify-center flex-row gap-4">
-      <h1>No estás autenticado</h1>
-    <Button onClick={() => navigate("/login")}>Ir a Login</Button>
-    </div>
-  )
   );
-
-
+};
 
 export default ProfilePage;

@@ -3,7 +3,6 @@ using MiProyecto.Application.Users.Exceptions;
 using MiProyecto.Domain.Common.Exceptions;
 using MiProyecto.WebApi.Common;
 using System.Net;
-using System.Security.Authentication;
 using System.Text.Json;
 
 namespace MiProyecto.WebApi.Middleware;
@@ -50,7 +49,7 @@ public class ExceptionHandlingMiddleware
 
         switch (exception)
         {
-            // --- NUEVOS CASOS PARA AUTH ---
+            
             case InvalidCredentialsException authEx:
                 errorResponse.Status = (int)HttpStatusCode.Unauthorized;
                 errorResponse.Title = "Credenciales inválidas";
@@ -72,7 +71,7 @@ public class ExceptionHandlingMiddleware
                 response.StatusCode = (int)HttpStatusCode.Unauthorized;
                 break;
 
-            // --- TUS CASOS EXISTENTES (Mantenidos) ---
+            
             case NotFoundException notFoundEx:
                 errorResponse.Status = (int)HttpStatusCode.NotFound;
                 errorResponse.Title = "Recurso no encontrado";
@@ -84,7 +83,7 @@ public class ExceptionHandlingMiddleware
                 errorResponse.Status = (int)HttpStatusCode.BadRequest;
                 errorResponse.Title = "Error de validación";
                 errorResponse.Detail = "Uno o más errores de validación han ocurrido.";
-                errorResponse.Errors = validationEx.Errors; // Diccionario de errores
+                errorResponse.Errors = validationEx.Errors; 
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
                 break;
 
@@ -96,7 +95,7 @@ public class ExceptionHandlingMiddleware
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
                 break;
 
-            // ... (resto de casos: DomainException, ArgumentException, ConflictException, etc.)
+            
 
             default:
                 errorResponse.Status = (int)HttpStatusCode.InternalServerError;
@@ -108,7 +107,7 @@ public class ExceptionHandlingMiddleware
                 break;
         }
 
-        // Serialización... (igual que tu código)
+       
         var jsonResponse = JsonSerializer.Serialize(errorResponse, new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase

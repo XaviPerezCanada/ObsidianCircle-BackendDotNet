@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using MiProyecto.Application.Users.DTOs;
 using MiProyecto.Application.Users.Exceptions;  
 using MiProyecto.Domain.Security;
 using MiProyecto.Domain.Users;
@@ -44,7 +45,7 @@ public class RefreshTokenService(
         return (accessToken, refreshToken);
     }
 
-    public async Task<(string AccessToken, string RefreshToken)> RefreshTokensAsync(
+    public async Task<(string AccessToken, string RefreshToken, UserDto User)> RefreshTokensAsync(
         string refreshToken, 
         string deviceId, 
         CancellationToken ct)
@@ -97,7 +98,16 @@ public class RefreshTokenService(
         // Generar nuevo access token
         var accessToken = jwtTokenGenerator.CreateToken(user);
 
-        return (accessToken, newRefreshToken);
+        var userDto = new UserDto(
+            Username: user.Username,
+            Email: user.Email,
+            Slug: user.Slug.Value,
+            Type: user.Type.Value,
+            Bio: string.IsNullOrWhiteSpace(user.Bio) ? null : user.Bio,
+            Image: string.IsNullOrWhiteSpace(user.Image) ? null : user.Image
+        );
+
+        return (accessToken, newRefreshToken, userDto);
     }
 
     public async Task RevokeRefreshTokenAsync(string refreshToken, CancellationToken ct)

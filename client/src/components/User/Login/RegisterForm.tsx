@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { AxiosError } from "axios";
 import { Shield, User, Mail, Lock, Loader2 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
@@ -19,7 +20,7 @@ type RegisterFormProps = {
 
 export function RegisterForm({ onSuccess }: RegisterFormProps) {
   const [formData, setFormData] = useState({
-    name: "",
+    username: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -48,13 +49,13 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
 
     try {
       console.log("📝 Intentando registrar usuario:", {
-        name: formData.name,
+        username: formData.username,
         email: formData.email,
         password: "***", // No loguear la contraseña real
       });
 
       const registerData = {
-        name: formData.name,
+        username: formData.username,
         email: formData.email,
         password: formData.password,
       };
@@ -68,7 +69,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
 
       setTimeout(() => {
         setFormData({
-          name: "",
+          username: "",
           email: "",
           password: "",
           confirmPassword: "",
@@ -77,7 +78,21 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       }, 2000);
     } catch (err) {
       console.error("❌ Error en el registro:", err);
-      setError(err instanceof Error ? err.message : "Error al registrar usuario");
+
+      const axiosError = err as AxiosError<any>;
+      const status = axiosError.response?.status;
+      const detail = axiosError.response?.data?.detail as string | undefined;
+
+      if (
+        status === 409 ||
+        (status === 500 &&
+          typeof detail === "string" &&
+          detail.toLowerCase().includes("ya está registrado"))
+      ) {
+        setError("Ese email ya está registrado. Prueba con otro o inicia sesión.");
+      } else {
+        setError("Error al registrar usuario. Inténtalo de nuevo más tarde.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -111,17 +126,17 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-foreground">
+            <Label htmlFor="username" className="text-foreground">
               Nombre
             </Label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                id="name"
-                name="name"
+                id="username"
+                name="username"
                 type="text"
                 placeholder="Tu nombre"
-                value={formData.name}
+                value={formData.username}
                 onChange={handleChange}
                 required
                 className="pl-10 bg-background/50 border-border focus-visible:border-primary focus-visible:ring-primary/50"

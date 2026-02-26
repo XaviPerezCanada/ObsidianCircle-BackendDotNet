@@ -14,10 +14,10 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: false,
-    // Proxy API al backend .NET (debe estar en marcha en el puerto 5222)
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:5222',
+        // API HTTP en 5222; si usas HTTPS en 7200, cambia a 'https://localhost:7200'
+        target: 'http://localhost:5222',
         changeOrigin: true,
         secure: false,
       },
