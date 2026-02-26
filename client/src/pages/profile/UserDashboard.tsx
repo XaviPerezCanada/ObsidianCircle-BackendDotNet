@@ -8,11 +8,14 @@ import { Dialog, DialogContent } from "@/src/components/ui/dialog";
 import { useJuego } from "@/src/hooks/useJuego";
 import { Dice6, BookOpen } from "lucide-react";
 import { Badge } from "@/src/components/ui/badge";
+import type { Juego } from "@/src/services/juego.service";
 
 export function UserDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showAddArticle, setShowAddArticle] = useState(false);
+  const [showEditArticle, setShowEditArticle] = useState(false);
+  const [selectedJuego, setSelectedJuego] = useState<Juego | null>(null);
 
   const { juegos, loading, error, getJuegos } = useJuego();
 
@@ -24,7 +27,18 @@ export function UserDashboard() {
 
   const handleJuegoAdded = () => {
     setShowAddArticle(false);
-    // Recargar la lista de juegos
+    
+    getJuegos();
+  }
+
+  const handleEditJuego = (juego: Juego) => {
+    setSelectedJuego(juego);
+    setShowEditArticle(true);
+  }
+
+  const handleJuegoEdited = () => {
+    setShowEditArticle(false);
+    setSelectedJuego(null);
     getJuegos();
   }
 
@@ -42,7 +56,7 @@ export function UserDashboard() {
     return <div>Acceso restringido: Solo para usuarios SOCIO</div>;
   }
 
-  // Filtrar solo los juegos que pertenecen al usuario autenticado
+
   const misJuegos = juegos.filter(juego => juego.socio === user.username);
 
   return (
@@ -111,6 +125,15 @@ export function UserDashboard() {
                       Categoria: {juego.categoria}
                     </p>
                   )}
+                  <div className="mt-4 flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEditJuego(juego)}
+                    >
+                      Editar
+                    </Button>
+                  </div>
                 </div>
               );
             })}
@@ -129,6 +152,24 @@ export function UserDashboard() {
         >
           <div className="p-0">
             <AddArticle onSuccess={handleJuegoAdded} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para Editar Juego */}
+      <Dialog open={showEditArticle} onOpenChange={setShowEditArticle}>
+        <DialogContent 
+          className="max-w-md p-0 bg-background/95 backdrop-blur-md border-border shadow-xl"
+          showCloseButton={true}
+        >
+          <div className="p-0">
+            {selectedJuego && (
+              <AddArticle
+                mode="edit"
+                initialJuego={selectedJuego}
+                onSuccess={handleJuegoEdited}
+              />
+            )}
           </div>
         </DialogContent>
       </Dialog>

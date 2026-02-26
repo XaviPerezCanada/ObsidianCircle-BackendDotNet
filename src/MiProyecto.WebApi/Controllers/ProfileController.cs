@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MiProyecto.Application.BoardGames.Dtos;
 using MiProyecto.Application.Users.DTOs;
 using MiProyecto.Application.Users.Services;
 using MiProyecto.WebApi.Models;
@@ -37,13 +38,26 @@ public class ProfileController(IUserProfileHandler profileHandler) : ControllerB
     }
 
     /// <summary>
+    /// Devuelve los juegos de mesa asociados al usuario autenticado (sus juegos cedidos).
+    /// </summary>
+    /// <response code="200">Lista de juegos de mesa del usuario actual.</response>
+    [HttpGet("boardgames")]
+    [ProducesResponseType(typeof(IEnumerable<BoardGameDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<BoardGameDto>>> GetMyBoardGames(CancellationToken ct)
+    {
+        var identifier = GetUserIdentifier();
+        var myGames = await profileHandler.GetUserBoardGamesAsync(identifier, ct);
+        return Ok(myGames);
+    }
+
+    /// <summary>
     /// Obtiene un identificador de usuario desde el JWT.
     /// Intenta primero el email, y si no existe o está vacío, usa el subject (username).
     /// </summary>
 
     private string GetUserIdentifier()
     {
-        // Primero intentamos con los tipos mapeados por JwtBearer
+       
         var email = User.FindFirst(ClaimTypes.Email)?.Value;
         if (!string.IsNullOrWhiteSpace(email))
             return email;
@@ -54,7 +68,7 @@ public class ProfileController(IUserProfileHandler profileHandler) : ControllerB
         if (!string.IsNullOrWhiteSpace(username))
             return username;
 
-        // Fallback por si en algún momento usamos los nombres "puros" del JWT
+        
         email = User.FindFirst(JwtRegisteredClaimNames.Email)?.Value
                 ?? User.FindFirst("email")?.Value;
         if (!string.IsNullOrWhiteSpace(email))
@@ -67,5 +81,7 @@ public class ProfileController(IUserProfileHandler profileHandler) : ControllerB
 
         throw new UnauthorizedAccessException("Usuario no autenticado");
     }
+
+
 }
 

@@ -12,6 +12,8 @@ import type { GameRoom } from "@/src/services/sala.service";
 import { gameRoomQueries } from "../../admin";
 import { Button } from "@/src/components/ui/button";
 import { getGameRoomImageUrl } from "@/src/utils/gameRoomImages";
+import { Link } from "react-router-dom";
+
 
 export type CardGameRoomsProps = {
   /** Si se pasan, se usan estos datos (ej. desde useGameRoomSearch) y no se hace fetch interno. */
@@ -34,6 +36,10 @@ export default function CardGameRooms({
   const gameRooms = isControlled ? gameRoomsProp : gameRoomsLocal;
   const loading = isControlled ? (loadingProp ?? false) : loadingLocal;
   const error = isControlled ? errorProp : errorLocal;
+  const activeGameRooms = (gameRooms ?? []).filter((room) => {
+    const status = room.status?.toLowerCase();
+    return status === "active" || status === "activo";
+  });
 
   const getGameRooms = async () => {
     try {
@@ -60,7 +66,7 @@ export default function CardGameRooms({
     return <div>Error: {error}</div>;
   }
 
-  if (!gameRooms?.length) {
+  if (!activeGameRooms.length) {
     return (
       <p className="text-muted-foreground text-center py-8">
         No hay salas disponibles.
@@ -70,7 +76,7 @@ export default function CardGameRooms({
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {gameRooms.map((gameRoom) => {
+      {activeGameRooms.map((gameRoom) => {
               // const isSelected = selectedRoomSlug === gameRoom.slug;
 
               return (
@@ -102,16 +108,18 @@ export default function CardGameRooms({
                     </CardContent>
                     <CardFooter className="flex flex-col gap-2">
                       <Button className="w-full" variant="outline">
-                        Reservar
+                      <Link to="/reservation">Reservar</Link>
+                       
                       </Button>
                       <Button className="w-full" variant="outline">
-                        Ver partidas abiertas
+                      <Link to="/shop/events"> Ver partidas abiertas</Link>
+                       
                       </Button>
                     </CardFooter>
                   </CardHeader>
-                </Card>
-              );
-            })}
-    </div>
-  );
+        </Card>
+      );
+    })}
+  </div>
+);
 }

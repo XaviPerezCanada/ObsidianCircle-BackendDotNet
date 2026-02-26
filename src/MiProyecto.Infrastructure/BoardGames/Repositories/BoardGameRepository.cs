@@ -20,8 +20,17 @@ public class BoardGameRepository : IBoardGameRepository
     public Task<BoardGame?> GetByIdAsync(int id, CancellationToken ct = default)
         => _db.BoardGames.FirstOrDefaultAsync(x => x.Id == id, ct);
 
+    public Task<BoardGame?> GetBySlugAsync(string slug, CancellationToken ct = default)
+        => _db.BoardGames.FirstOrDefaultAsync(x => x.Slug == slug, ct);
+
     public async Task<IEnumerable<BoardGame>> GetAllAsync(CancellationToken ct = default)
         => await _db.BoardGames.ToListAsync(ct);
+
+    public async Task UpdateAsync(BoardGame game, CancellationToken ct = default)
+    {
+        _db.BoardGames.Update(game);
+        await _db.SaveChangesAsync(ct);
+    }
 
     public async Task<bool> ExistsAsync(int id, CancellationToken ct = default)
         => await _db.BoardGames.AnyAsync(g => g.Id == id, ct);
@@ -64,6 +73,18 @@ public class BoardGameRepository : IBoardGameRepository
             .ToListAsync();
 
         return new PagedResult<BoardGame>(items, p.Page, p.Limit, total);
+    }
+
+    public async Task<IEnumerable<BoardGame>> GetBySocioAsync(string socio, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(socio))
+        {
+            return Array.Empty<BoardGame>();
+        }
+
+        return await _db.BoardGames
+            .Where(g => g.Socio == socio)
+            .ToListAsync(ct);
     }
 }
 

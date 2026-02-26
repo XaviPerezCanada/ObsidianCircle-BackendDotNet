@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MiProyecto.Application.BoardGames.Dtos;
 using MiProyecto.Application.BoardGames.Interfaces;
@@ -74,6 +75,7 @@ public class BoardGamesController : ControllerBase
     /// </summary>
     /// <response code="201">Juego creado.</response>
     [HttpPost]
+    [Authorize]
     [ProducesResponseType(typeof(BoardGameDto), StatusCodes.Status201Created)]
     public async Task<IActionResult> Create(
         [FromBody] CreateBoardGameCommand command,
@@ -84,6 +86,48 @@ public class BoardGamesController : ControllerBase
         var created = await _repository.GetByIdAsync(boardGame.Id, ct);
         var dto = created is not null ? MapToDto(created) : MapToDto(boardGame);
         return Created($"/api/BoardGames/{dto.Id}", dto);
+    }
+
+    public record UpdateBoardGameRequest(
+        string? Titulo,
+        int? JugadoresMin,
+        int? JugadoresMax
+    );
+
+    /// <summary>
+    /// Actualiza los datos básicos de un juego de mesa existente.
+    /// </summary>
+    /// <response code="200">Juego actualizado.</response>
+    /// <response code="404">No se encontró el juego.</response>
+    [HttpPut("{slug}")]
+    [Authorize]
+    [ProducesResponseType(typeof(BoardGameDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<BoardGameDto>> Update(
+        string slug,
+        [FromBody] UpdateBoardGameRequest request,
+        CancellationToken ct)
+    {
+        var game = await _repository.GetBySlugAsync(slug, ct);
+        if (game is null)
+        {
+            return NotFound();
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Titulo))
+        {
+            game.SetTitulo(request.Titulo);
+        }
+
+        if (request.JugadoresMin.HasValue && request.JugadoresMax.HasValue)
+        {
+            game.SetJugadores(request.JugadoresMin.Value, request.JugadoresMax.Value);
+        }
+
+        await _repository.UpdateAsync(game, ct);
+
+        var dto = MapToDto(game);
+        return Ok(dto);
     }
 
     private static BoardGameDto MapToDto(BoardGame g)

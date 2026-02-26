@@ -3,16 +3,18 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/src/comp
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/src/components/ui/select";
-import { juegoService, type CreateJuegoRequest } from "@/src/services/juego.service";
 import { toast } from "@/src/hooks/use-toast";
-import { useAuth } from "@/src/context/auth-context";
+import { useMyBoardGames, type NewBoardGameFormData } from "@/src/hooks/useMyBoardGames";
+import { juegoService, type Juego } from "@/src/services/juego.service";
 
 interface AddArticleProps {
   onSuccess?: () => void;
+  mode?: "create" | "edit";
+  initialJuego?: Juego | null;
 }
 
-export function AddArticle({ onSuccess }: AddArticleProps) {
-    const { user } = useAuth();
+export function AddArticle({ onSuccess, mode = "create", initialJuego }: AddArticleProps) {
+    const { addGame } = useMyBoardGames(false);
 
     const [titulo, setTitulo] = useState("");
     const [content, setContent] = useState("");
@@ -33,6 +35,18 @@ export function AddArticle({ onSuccess }: AddArticleProps) {
         const formattedDate = now.toISOString().split('T')[0]; // Formato YYYY-MM-DD
         setDate(formattedDate);
     }, []);
+
+    // Rellenar datos cuando estamos en modo edición
+    useEffect(() => {
+        if (mode === "edit" && initialJuego) {
+            setTitulo(initialJuego.titulo ?? "");
+            setContent(initialJuego.descripcion ?? "");
+            setMinPlayers(initialJuego.jugadoresMin?.toString() ?? "");
+            setMaxPlayers(initialJuego.jugadoresMax?.toString() ?? "");
+            setTipo((initialJuego.genero as "MESA" | "ROL") ?? "");
+            // El resto de campos no existen de forma directa en el DTO, los dejamos vacíos
+        }
+    }, [mode, initialJuego]);
 
     const handleMinPlayersChange = (value: string) => {
         setMinPlayers(value);
@@ -81,56 +95,58 @@ export function AddArticle({ onSuccess }: AddArticleProps) {
             return;
         }
 
-        const socio = user?.username || user?.slug || user?.email;
-        if (!socio) {
-            toast({
-                title: 'Error',
-                description: 'No se pudo determinar el socio. Inicia sesión de nuevo.',
-                variant: 'destructive',
-            });
-            return;
-        }
-
         setLoading(true);
 
         try {
             const jugadoresMin = parseInt(minPlayers, 10);
             const jugadoresMax = parseInt(maxPlayers, 10);
 
-            const juegoData: CreateJuegoRequest = {
-                Titulo: titulo.trim(),
-                Socio: socio,
-                JugadoresMin: jugadoresMin,
-                JugadoresMax: jugadoresMax,
-                descripcion: content.trim() || undefined,
-                tipo: tipo as "MESA" | "ROL",
-                edad_minima: edad_minima ? parseInt(edad_minima, 10) : undefined,
-                duracion_min: duracion_min ? parseInt(duracion_min, 10) : undefined,
-                sistema: sistema.trim() || undefined,
-                ambientacion: ambientacion.trim() || undefined,
-                nivel_inicial: nivel_inicial ? parseInt(nivel_inicial, 10) : undefined,
-                estado: estado,
-            };
+            if (mode === "edit" && initialJuego) {
+                await juegoService.update(initialJuego.slug, {
+                    Titulo: titulo.trim(),
+                    JugadoresMin: jugadoresMin,
+                    JugadoresMax: jugadoresMax,
+                });
 
-            await juegoService.create(juegoData);
+                toast({
+                    title: "Éxito",
+                    description: "Juego actualizado correctamente",
+                });
+            } else {
+                const juegoData: NewBoardGameFormData = {
+                    titulo: titulo.trim(),
+                    jugadoresMin,
+                    jugadoresMax,
+                    descripcion: content.trim() || undefined,
+                    tipo: tipo as "MESA" | "ROL",
+                    edadMinima: edad_minima ? parseInt(edad_minima, 10) : undefined,
+                    duracionMin: duracion_min ? parseInt(duracion_min, 10) : undefined,
+                    sistema: sistema.trim() || undefined,
+                    ambientacion: ambientacion.trim() || undefined,
+                    nivelInicial: nivel_inicial ? parseInt(nivel_inicial, 10) : undefined,
+                    estado: estado,
+                };
 
-            toast({
-                title: 'Éxito',
-                description: 'Juego agregado correctamente',
-            });
+                await addGame(juegoData);
 
-            // Limpiar formulario
-            setTitulo("");
-            setContent("");
-            setMinPlayers("");
-            setMaxPlayers("");
-            setTipo("");
-            setEdad_minima("");
-            setDuracion_min("");
-            setSistema("");
-            setAmbientacion("");
-            setNivel_inicial("");
-            setEstado("ACTIVO");
+                toast({
+                    title: 'Éxito',
+                    description: 'Juego agregado correctamente',
+                });
+
+                // Limpiar formulario tras crear
+                setTitulo("");
+                setContent("");
+                setMinPlayers("");
+                setMaxPlayers("");
+                setTipo("");
+                setEdad_minima("");
+                setDuracion_min("");
+                setSistema("");
+                setAmbientacion("");
+                setNivel_inicial("");
+                setEstado("ACTIVO");
+            }
 
             // Cerrar dialog si hay callback
             if (onSuccess) {
@@ -145,6 +161,7 @@ export function AddArticle({ onSuccess }: AddArticleProps) {
                 backendErrors?.Titulo?.[0] ||
                 backendTitle ||
                 error?.response?.data?.message ||
+                error?.message ||
                 "Error al agregar juego";
 
             toast({

@@ -95,8 +95,9 @@ export const ProfilePage = () => {
               <Label htmlFor="username">Nombre de usuario</Label>
               <Input
                 id="username"
+                disabled
+                readOnly
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -104,8 +105,9 @@ export const ProfilePage = () => {
               <Input
                 id="email"
                 type="email"
+                disabled
+                readOnly
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -133,9 +135,7 @@ export const ProfilePage = () => {
               <Button variant="outline" type="button" onClick={logout}>
                 Logout
               </Button>
-              <Button variant="destructive" type="button">
-                Eliminar Cuenta
-              </Button>
+            
             </div>
           </CardFooter>
         </form>

@@ -24,16 +24,11 @@ export type Juego = {
 }
 
 export type CreateJuegoRequest = {
-  /** Debe coincidir con CreateBoardGameCommand.Titulo (backend) */
-  Titulo: string
-  /** Debe coincidir con CreateBoardGameCommand.Socio (backend) */
-  Socio: string
-  /** Debe coincidir con CreateBoardGameCommand.JugadoresMin (backend) */
-  JugadoresMin: number
-  /** Debe coincidir con CreateBoardGameCommand.JugadoresMax (backend) */
-  JugadoresMax: number
 
-  // Campos adicionales usados solo en el front o para futuras ampliaciones
+  Titulo: string
+  Socio: string
+  JugadoresMin: number
+  JugadoresMax: number
   descripcion?: string
   tipo?: 'MESA' | 'ROL'
   edad_minima?: number
@@ -44,7 +39,13 @@ export type CreateJuegoRequest = {
   estado?: 'ACTIVO' | 'INACTIVO'
 }
 
-/** Tipo genérico para resultados paginados del backend */
+export type UpdateJuegoRequest = {
+  Titulo?: string
+  JugadoresMin?: number
+  JugadoresMax?: number
+}
+
+
 export type PagedResult<T> = {
   items: T[]
   page: number
@@ -74,15 +75,20 @@ export const juegoService = {
     return await api.post<Juego>('/BoardGames', data)
   },
 
-  getMyJuegos: async () => {
-    return await api.get<Juego[]>('/BoardGames/mis-juegos/list')
+  update: async (slug: string, data: UpdateJuegoRequest) => {
+    return await api.put<Juego>(`/BoardGames/${encodeURIComponent(slug)}`, data)
   },
 
-  /**
-   * Búsqueda paginada con filtros
-   * @param params Parámetros de búsqueda (q, jugadores, sort, page, limit)
-   * @returns Resultado paginado con items, page, pageSize, totalCount
-   */
+  // Versión usada por hooks antiguos (devuelve AxiosResponse)
+  getMyJuegos: async () => {
+    return await api.get<Juego[]>('/Profile/boardgames')
+  },
+
+  getMyGamesFromProfile: async () => {
+    const res = await api.get<Juego[]>('/Profile/boardgames')
+    return res.data
+  },
+
   search: async (params: BoardGameSearchParams = {}) => {
     const queryString = buildQueryFromParams({
       q: params.q,
