@@ -81,7 +81,7 @@ public class BoardGamesController : ControllerBase
         [FromBody] CreateBoardGameCommand command,
         CancellationToken ct)
     {
-        var boardGame = _createHandler.Handle(command.Titulo, command.Socio, command.JugadoresMin, command.JugadoresMax);
+        var boardGame = _createHandler.Handle(command);
         await _repository.AddAsync(boardGame, ct);
         var created = await _repository.GetByIdAsync(boardGame.Id, ct);
         var dto = created is not null ? MapToDto(created) : MapToDto(boardGame);

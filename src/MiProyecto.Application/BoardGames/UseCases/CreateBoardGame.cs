@@ -1,4 +1,4 @@
-﻿using MiProyecto.Application.BoardGames.Dtos;
+using MiProyecto.Application.BoardGames.Dtos;
 using MiProyecto.Application.BoardGames.Interfaces;
 using MiProyecto.Application.Interfaces;
 using MiProyecto.Domain.BoardGames.Entities;
@@ -10,7 +10,15 @@ public record CreateBoardGameCommand(
     string Titulo,
     string Socio,
     int JugadoresMin,
-    int JugadoresMax
+    int JugadoresMax,
+    string? Descripcion,
+    string? Genero,
+    int? EdadRecomendada,
+    int? DuracionMinutos,
+    string? Categoria,
+    string? Ubicacion,
+    string? Observaciones,
+    string? Editorial
 );
 
 public class CreateBoardGameHandler
@@ -21,17 +29,27 @@ public class CreateBoardGameHandler
     {
         _slugGenerator = slugGenerator;
     }
-    public BoardGame Handle(string titulo, string socio, int jugadoresMin, int jugadoresMax)
-    {  
-        var slug = _slugGenerator.Generate(titulo);
- 
+
+    public BoardGame Handle(CreateBoardGameCommand command)
+    {
+        var slug = _slugGenerator.Generate(command.Titulo);
+
         var boardGame = new BoardGame(
-            titulo,
+            command.Titulo,
             slug,
-            socio,
-            jugadoresMin,
-            jugadoresMax
+            command.Socio,
+            command.JugadoresMin,
+            command.JugadoresMax
         );
+
+        boardGame.SetDescripcion(command.Descripcion);
+        boardGame.SetGenero(command.Genero);
+        boardGame.SetEdadRecomendada(command.EdadRecomendada);
+        boardGame.SetDuracionMinutos(command.DuracionMinutos);
+        boardGame.SetCategoria(command.Categoria);
+        boardGame.SetUbicacion(command.Ubicacion);
+        boardGame.SetObservaciones(command.Observaciones);
+        boardGame.SetEditorial(command.Editorial);
 
         return boardGame;
     }

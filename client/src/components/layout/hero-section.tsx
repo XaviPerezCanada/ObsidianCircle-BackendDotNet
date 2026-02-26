@@ -1,5 +1,6 @@
 import { Button } from "@/src/components/ui/button";
 import { Sword, Shield, Scroll } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function HeroSection() {
   return (
@@ -33,16 +34,25 @@ export function HeroSection() {
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button size="lg" className="text-lg px-8 py-6 font-semibold">
-            <Scroll className="w-5 h-5 mr-2" />
-            Comenzar Aventura
+          <Button
+            asChild
+            size="lg"
+            className="text-lg px-8 py-6 font-semibold"
+          >
+            <Link to="/shop/rooms" className="flex items-center">
+              <Scroll className="w-5 h-5 mr-2" />
+              Visita nuestras salas de juego
+            </Link>
           </Button>
           <Button
+            asChild
             variant="outline"
             size="lg"
             className="text-lg px-8 py-6 font-semibold border-primary/50 text-foreground hover:bg-primary/10 bg-transparent"
           >
-            Explorar Características
+            <Link to="/shop/games">
+              Explorar nuestos juegos
+            </Link>
           </Button>
         </div>
       </div>

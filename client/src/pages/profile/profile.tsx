@@ -10,7 +10,7 @@ import { useProfile } from "@/src/hooks/useProfile";
 import { useToast } from "@/src/hooks/use-toast";
 
 export const ProfilePage = () => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, logoutAll } = useAuth();
   const navigate = useNavigate();
   const { profile, loading, error, updateProfile } = useProfile(isAuthenticated);
   const { toast } = useToast();
@@ -135,7 +135,9 @@ export const ProfilePage = () => {
               <Button variant="outline" type="button" onClick={logout}>
                 Logout
               </Button>
-            
+              <Button variant="destructive" type="button" onClick={logoutAll}>
+                Logout en todos los dispositivos
+              </Button>
             </div>
           </CardFooter>
         </form>

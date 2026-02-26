@@ -53,5 +53,8 @@ export const authService = {
   logout: async () => {
     return await api.post('/Auth/logout')
   },
+  logoutAll: async () => {
+    return await api.post('/Auth/logout-all')
+  },
 }
   

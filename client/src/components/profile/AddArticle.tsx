@@ -24,10 +24,10 @@ export function AddArticle({ onSuccess, mode = "create", initialJuego }: AddArti
     const [tipo, setTipo] = useState<"MESA" | "ROL" | "">("");
     const [edad_minima, setEdad_minima] = useState("");
     const [duracion_min, setDuracion_min] = useState("");
-    const [sistema, setSistema] = useState("");
-    const [ambientacion, setAmbientacion] = useState("");
-    const [nivel_inicial, setNivel_inicial] = useState("");
-    const [estado, setEstado] = useState<"ACTIVO" | "INACTIVO">("ACTIVO");
+    const [categoria, setCategoria] = useState("");
+    const [ubicacion, setUbicacion] = useState("");
+    const [observaciones, setObservaciones] = useState("");
+    const [editorial, setEditorial] = useState("");
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -44,7 +44,10 @@ export function AddArticle({ onSuccess, mode = "create", initialJuego }: AddArti
             setMinPlayers(initialJuego.jugadoresMin?.toString() ?? "");
             setMaxPlayers(initialJuego.jugadoresMax?.toString() ?? "");
             setTipo((initialJuego.genero as "MESA" | "ROL") ?? "");
-            // El resto de campos no existen de forma directa en el DTO, los dejamos vacíos
+            setCategoria(initialJuego.categoria ?? "");
+            setUbicacion(initialJuego.ubicacion ?? "");
+            setObservaciones(initialJuego.observaciones ?? "");
+            setEditorial(initialJuego.editorial ?? "");
         }
     }, [mode, initialJuego]);
 
@@ -119,12 +122,12 @@ export function AddArticle({ onSuccess, mode = "create", initialJuego }: AddArti
                     jugadoresMax,
                     descripcion: content.trim() || undefined,
                     tipo: tipo as "MESA" | "ROL",
-                    edadMinima: edad_minima ? parseInt(edad_minima, 10) : undefined,
-                    duracionMin: duracion_min ? parseInt(duracion_min, 10) : undefined,
-                    sistema: sistema.trim() || undefined,
-                    ambientacion: ambientacion.trim() || undefined,
-                    nivelInicial: nivel_inicial ? parseInt(nivel_inicial, 10) : undefined,
-                    estado: estado,
+                    edadRecomendada: edad_minima ? parseInt(edad_minima, 10) : undefined,
+                    duracionMinutos: duracion_min ? parseInt(duracion_min, 10) : undefined,
+                    categoria: categoria.trim() || undefined,
+                    ubicacion: ubicacion.trim() || undefined,
+                    observaciones: observaciones.trim() || undefined,
+                    editorial: editorial.trim() || undefined,
                 };
 
                 await addGame(juegoData);
@@ -142,10 +145,10 @@ export function AddArticle({ onSuccess, mode = "create", initialJuego }: AddArti
                 setTipo("");
                 setEdad_minima("");
                 setDuracion_min("");
-                setSistema("");
-                setAmbientacion("");
-                setNivel_inicial("");
-                setEstado("ACTIVO");
+                setCategoria("");
+                setUbicacion("");
+                setObservaciones("");
+                setEditorial("");
             }
 
             // Cerrar dialog si hay callback
@@ -220,33 +223,28 @@ export function AddArticle({ onSuccess, mode = "create", initialJuego }: AddArti
                     </Select>
                     <Input 
                         type="text" 
-                        placeholder="Sistema" 
-                        value={sistema} 
-                        onChange={(e) => setSistema(e.target.value)} 
+                        placeholder="Editorial" 
+                        value={editorial} 
+                        onChange={(e) => setEditorial(e.target.value)} 
                     />
                     <Input 
                         type="text" 
-                        placeholder="Ambientación" 
-                        value={ambientacion} 
-                        onChange={(e) => setAmbientacion(e.target.value)} 
+                        placeholder="Categoría" 
+                        value={categoria} 
+                        onChange={(e) => setCategoria(e.target.value)} 
                     />
                     <Input 
-                        type="number" 
-                        placeholder="Dificultad (1-Fácil, 10-Difícil)" 
-                        value={nivel_inicial} 
-                        onChange={(e) => setNivel_inicial(e.target.value)}
-                        min="1"
-                        max="10"
+                        type="text" 
+                        placeholder="Ubicación" 
+                        value={ubicacion} 
+                        onChange={(e) => setUbicacion(e.target.value)} 
                     />
-                    <Select value={estado} onValueChange={(value) => setEstado(value as "ACTIVO" | "INACTIVO")}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Estado" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="ACTIVO">ACTIVO</SelectItem>
-                            <SelectItem value="INACTIVO">INACTIVO</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <Input 
+                        type="text" 
+                        placeholder="Observaciones" 
+                        value={observaciones} 
+                        onChange={(e) => setObservaciones(e.target.value)} 
+                    />
                     <Input 
                         type="number" 
                         placeholder="Edad Mínima" 

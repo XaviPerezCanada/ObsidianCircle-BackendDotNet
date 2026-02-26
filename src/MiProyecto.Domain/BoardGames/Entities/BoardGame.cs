@@ -1,4 +1,4 @@
-﻿using MiProyecto.Domain.BoardGames.Enums;
+using MiProyecto.Domain.BoardGames.Enums;
 using MiProyecto.Domain.BoardGames.Exceptions;
 using MiProyecto.Domain.Common;
 
@@ -86,6 +86,52 @@ namespace MiProyecto.Domain.BoardGames.Entities
 
             JugadoresMin = min;
             JugadoresMax = max;
+        }
+
+        public void SetDescripcion(string? descripcion)
+        {
+            Descripcion = (descripcion ?? string.Empty).Trim();
+        }
+
+        public void SetEditorial(string? editorial)
+        {
+            Editorial = (editorial ?? string.Empty).Trim();
+        }
+
+        public void SetGenero(string? genero)
+        {
+            Genero = (genero ?? string.Empty).Trim();
+        }
+
+        public void SetCategoria(string? categoria)
+        {
+            Categoria = (categoria ?? string.Empty).Trim();
+        }
+
+        public void SetUbicacion(string? ubicacion)
+        {
+            Ubicacion = (ubicacion ?? string.Empty).Trim();
+        }
+
+        public void SetObservaciones(string? observaciones)
+        {
+            Observaciones = (observaciones ?? string.Empty).Trim();
+        }
+
+        public void SetEdadRecomendada(int? edad)
+        {
+            if (edad.HasValue && edad.Value >= 0)
+            {
+                EdadRecomendada = edad.Value;
+            }
+        }
+
+        public void SetDuracionMinutos(int? minutos)
+        {
+            if (minutos.HasValue && minutos.Value >= 0)
+            {
+                DuracionMinutos = minutos.Value;
+            }
         }
 
         public void Reservar()

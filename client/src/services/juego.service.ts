@@ -9,6 +9,7 @@ export type Juego = {
   editorial: string
   genero: string
   categoria: string
+  ubicacion: string
   titulo: string
   descripcion?: string | null
   jugadoresMin?: number | null
@@ -24,19 +25,18 @@ export type Juego = {
 }
 
 export type CreateJuegoRequest = {
-
   Titulo: string
   Socio: string
   JugadoresMin: number
   JugadoresMax: number
-  descripcion?: string
-  tipo?: 'MESA' | 'ROL'
-  edad_minima?: number
-  duracion_min?: number
-  sistema?: string
-  ambientacion?: string
-  nivel_inicial?: number
-  estado?: 'ACTIVO' | 'INACTIVO'
+  Descripcion?: string
+  Genero?: string
+  EdadRecomendada?: number
+  DuracionMinutos?: number
+  Categoria?: string
+  Ubicacion?: string
+  Observaciones?: string
+  Editorial?: string
 }
 
 export type UpdateJuegoRequest = {

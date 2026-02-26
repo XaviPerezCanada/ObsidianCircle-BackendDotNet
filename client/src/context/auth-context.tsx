@@ -15,6 +15,7 @@ type AuthContextValue = AuthState & {
   login: (data: LoginRequest) => Promise<AuthResponse>
   register: (data: RegisterRequest) => Promise<AuthResponse>
   logout: () => void
+  logoutAll: () => void
   refreshUser: () => Promise<void>
 }
 
@@ -126,6 +127,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initializeAuth()
   }, [])
 
+  const performLocalLogout = () => {
+    authStore.clear()
+    setState({ accessToken: null, user: null })
+  }
+
   const logout = async () => {
     try {
       await authService.logout()
@@ -134,11 +140,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Error al cerrar sesi?n en el backend:', error)
     }
     // Limpiar store en memoria (no localStorage)
-    authStore.clear()
-    setState({ accessToken: null, user: null })
+    performLocalLogout()
     toast({
       title: 'Sesi?n cerrada',
       description: 'Cerraste sesi?n correctamente',
+    })
+  }
+
+  const logoutAll = async () => {
+    try {
+      await authService.logoutAll()
+    } catch (error) {
+      console.error('Error al cerrar todas las sesiones en el backend:', error)
+    }
+    performLocalLogout()
+    toast({
+      title: 'Sesiones cerradas',
+      description: 'Has cerrado sesi?n en todos tus dispositivos.',
     })
   }
 
@@ -204,6 +222,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       register,
       logout,
+      logoutAll,
       refreshUser,
     }),
     [state.accessToken, state.user],

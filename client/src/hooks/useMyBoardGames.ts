@@ -15,12 +15,12 @@ export type NewBoardGameFormData = {
   tipo?: 'MESA' | 'ROL'
   jugadoresMin: number
   jugadoresMax: number
-  edadMinima?: number
-  duracionMin?: number
-  sistema?: string
-  ambientacion?: string
-  nivelInicial?: number
-  estado?: 'ACTIVO' | 'INACTIVO'
+  edadRecomendada?: number
+  duracionMinutos?: number
+  categoria?: string
+  ubicacion?: string
+  observaciones?: string
+  editorial?: string
 }
 
 export function useMyBoardGames(enabled: boolean = true) {
@@ -60,14 +60,14 @@ export function useMyBoardGames(enabled: boolean = true) {
       Socio: socio,
       JugadoresMin: data.jugadoresMin,
       JugadoresMax: data.jugadoresMax,
-      descripcion: data.descripcion?.trim() || undefined,
-      tipo: data.tipo,
-      edad_minima: data.edadMinima,
-      duracion_min: data.duracionMin,
-      sistema: data.sistema?.trim() || undefined,
-      ambientacion: data.ambientacion?.trim() || undefined,
-      nivel_inicial: data.nivelInicial,
-      estado: data.estado,
+      Descripcion: data.descripcion?.trim() || undefined,
+      Genero: data.tipo,
+      EdadRecomendada: data.edadRecomendada,
+      DuracionMinutos: data.duracionMinutos,
+      Categoria: data.categoria?.trim() || undefined,
+      Ubicacion: data.ubicacion?.trim() || undefined,
+      Observaciones: data.observaciones?.trim() || undefined,
+      Editorial: data.editorial?.trim() || undefined,
     }
 
     const created = await juegoService.create(payload)
