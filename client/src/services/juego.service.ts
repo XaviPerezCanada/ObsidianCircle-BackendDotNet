@@ -24,11 +24,18 @@ export type Juego = {
 }
 
 export type CreateJuegoRequest = {
-  nombre: string
+  /** Debe coincidir con CreateBoardGameCommand.Titulo (backend) */
+  Titulo: string
+  /** Debe coincidir con CreateBoardGameCommand.Socio (backend) */
+  Socio: string
+  /** Debe coincidir con CreateBoardGameCommand.JugadoresMin (backend) */
+  JugadoresMin: number
+  /** Debe coincidir con CreateBoardGameCommand.JugadoresMax (backend) */
+  JugadoresMax: number
+
+  // Campos adicionales usados solo en el front o para futuras ampliaciones
   descripcion?: string
-  tipo: 'MESA' | 'ROL'
-  min_jugadores?: number
-  max_jugadores?: number
+  tipo?: 'MESA' | 'ROL'
   edad_minima?: number
   duracion_min?: number
   sistema?: string
@@ -47,15 +54,10 @@ export type PagedResult<T> = {
 
 /** Parámetros de búsqueda para juegos */
 export type BoardGameSearchParams = {
-  /** Texto de búsqueda (título, slug, descripción, género, editorial) */
   q?: string
-  /** Número de jugadores: filtrar juegos que admitan al menos este número */
   jugadores?: number
-  /** Orden: titulo_asc, titulo_desc, o por defecto por Id */
   sort?: string
-  /** Número de página (por defecto 1) */
   page?: number
-  /** Tamaño de página (por defecto 10, máximo 50) */
   limit?: number
 }
 

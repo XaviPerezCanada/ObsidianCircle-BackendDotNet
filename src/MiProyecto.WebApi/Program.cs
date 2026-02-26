@@ -14,16 +14,20 @@ using MiProyecto.Application.Users.Validation;
 using MiProyecto.Domain.Common.ValueObjects;
 using MiProyecto.Domain.Security;
 using MiProyecto.Domain.Users.Interfaces;
-using MiProyecto.Infrastructure.Users.Repositories;
 using MiProyecto.Infrastructure.BoardGames.Repositories;
 using MiProyecto.Infrastructure.Common;
 using MiProyecto.Infrastructure.GameRooms.Repositories;
 using MiProyecto.Infrastructure.Persistence.UnitOfWork;
 using MiProyecto.Infrastructure.Reservations.Repositories;
 using MiProyecto.Infrastructure.Security;
+using MiProyecto.Infrastructure.Users.Repositories;
 using MiProyecto.WebApi.Middleware;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json;
+
+
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,14 +53,16 @@ builder.Services.AddCors(options =>
                       "http://127.0.0.1:5173")
                   .AllowAnyHeader()
                   .AllowAnyMethod()
-                  .AllowCredentials();
+                  .AllowCredentials()
+                  .WithExposedHeaders("Authorization");
         }
         else
         {
             policy.WithOrigins("https://tu-dominio.com")
                   .AllowAnyHeader()
                   .AllowAnyMethod()
-                  .AllowCredentials();
+                  .AllowCredentials()
+                  .WithExposedHeaders("Authorization");
         }
     });
 });
@@ -83,9 +89,45 @@ var jwtSettings = builder.Configuration.GetSection("JwtIssuerOptions").Get<JwtIs
 var secretKey = jwtSettings?.SecretKey ?? "Clave_De_Seguridad_Temporal_De_32_Caracteres_Minimo";
 var keyBytes = Encoding.UTF8.GetBytes(secretKey);
 
+//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+//    .AddJwtBearer(options =>
+//    {
+//        options.TokenValidationParameters = new TokenValidationParameters
+//        {
+//            ValidateIssuer = true,
+//            ValidateAudience = true,
+//            ValidateLifetime = true,
+//            ValidateIssuerSigningKey = true,
+//            ValidIssuer = jwtSettings?.Issuer ?? "TuProyectoAPI",
+//            ValidAudience = jwtSettings?.Audience ?? "TuProyectoClient",
+//            IssuerSigningKey = new SymmetricSecurityKey(keyBytes)
+//        };
+//        options.Events = new JwtBearerEvents
+//        {
+//            OnChallenge = context =>
+//            {
+//                // Evita que el middleware por defecto escriba nada
+//                context.HandleResponse();
+
+//                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+//                context.Response.ContentType = "application/json";
+
+//                var payload = new
+//                {
+//                    title = "No autorizado",
+//                    status = 401,
+//                    detail = "El token no es válido o ha expirado."
+//                };
+
+//                var json = JsonSerializer.Serialize(payload);
+//                return context.Response.WriteAsync(json);
+//            }
+//        };
+//    });
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.IncludeErrorDetails = builder.Environment.IsDevelopment();
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -95,6 +137,58 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = jwtSettings?.Issuer ?? "TuProyectoAPI",
             ValidAudience = jwtSettings?.Audience ?? "TuProyectoClient",
             IssuerSigningKey = new SymmetricSecurityKey(keyBytes)
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (!string.IsNullOrWhiteSpace(context.Token))
+                {
+                    Console.WriteLine($"JWT TOKEN RECEIVED (len={context.Token.Length})");
+                }
+                else
+                {
+                    Console.WriteLine("JWT TOKEN RECEIVED: <none>");
+                }
+                return Task.CompletedTask;
+            },
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine($"JWT AUTH FAILED: {context.Exception.GetType().Name} - {context.Exception.Message}");
+                return Task.CompletedTask;
+            }
+            ,
+            OnTokenValidated = context =>
+            {
+                var email = context.Principal?.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Email)?.Value;
+                Console.WriteLine($"JWT TOKEN VALIDATED. email={email ?? "<none>"}");
+                return Task.CompletedTask;
+            },
+            OnChallenge = context =>
+            {
+                // Devuelve JSON y (en dev) el motivo real del fallo.
+                context.HandleResponse();
+
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+
+                var failure = context.AuthenticateFailure?.Message;
+                var detail =
+                    builder.Environment.IsDevelopment() && !string.IsNullOrWhiteSpace(failure)
+                        ? failure
+                        : "El token no es válido o ha expirado.";
+
+                var payload = new
+                {
+                    title = "No autorizado",
+                    status = 401,
+                    detail
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                return context.Response.WriteAsync(json);
+            }
         };
     });
 
@@ -121,6 +215,7 @@ builder.Services.AddScoped<MiProyecto.Application.BoardGames.Services.BoardGameS
 builder.Services.AddScoped<IGameRoomRepository, GameRoomRepository>();
 builder.Services.AddScoped<MiProyecto.Domain.Users.Interfaces.IUserRepository, MiProyecto.Infrastructure.Users.Repositories.UserRepository>();
 builder.Services.AddScoped<IAuthHandler, UserHandler>();
+builder.Services.AddScoped<IUserProfileHandler, UserProfileHandler>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();

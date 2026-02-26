@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿//using System;
+//using System.Collections.Generic;
+//using System.Text;
 
-namespace MiProyecto.Infrastructure.Persistence
-{
-    internal class ConduitDbContext
-    {
-    }
-}
+//namespace MiProyecto.Infrastructure.Persistence
+//{
+//    internal class ConduitDbContext
+//    {
+//    }
+//}

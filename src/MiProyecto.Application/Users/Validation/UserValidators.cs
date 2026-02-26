@@ -35,11 +35,11 @@ public class LoginUserDtoValidator : AbstractValidator<LoginUserDto>
             .NotEmpty()
             .WithMessage("El email es obligatorio")
             .EmailAddress()
-            .WithMessage("El email no es válido");
+            .WithMessage("El email no es valido");
 
         RuleFor(x => x.Password)
             .NotEmpty()
-            .WithMessage("La contraseña es obligatoria");
+            .WithMessage("La contrasenya es obligatoria");
     }
 }
 

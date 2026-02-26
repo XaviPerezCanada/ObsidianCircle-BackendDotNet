@@ -1,4 +1,4 @@
-﻿
+
 using MiProyecto.Domain.BoardGames.Exceptions;
 using MiProyecto.Domain.Common.ValueObjects;
 
@@ -91,6 +91,33 @@ public class User
     public void IncrementSessionVersion()
     {
         SessionVersion++;
+        UpdateModifiedAt();
+    }
+
+    public void UpdateProfile(string? username, string? email, string? bio, string? image)
+    {
+        if (!string.IsNullOrWhiteSpace(username) && !string.Equals(Username, username, StringComparison.Ordinal))
+        {
+            Username = username;
+            var slugValue = username.ToLower().Trim().Replace(" ", "-");
+            Slug = new Slug(slugValue);
+        }
+
+        if (!string.IsNullOrWhiteSpace(email) && !string.Equals(Email, email, StringComparison.OrdinalIgnoreCase))
+        {
+            Email = email;
+        }
+
+        if (bio is not null)
+        {
+            Bio = bio;
+        }
+
+        if (image is not null)
+        {
+            Image = image;
+        }
+
         UpdateModifiedAt();
     }
 

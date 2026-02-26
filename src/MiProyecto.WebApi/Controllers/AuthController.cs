@@ -23,7 +23,7 @@ namespace MiProyecto.WebApi.Controllers
             CancellationToken ct)
         {
             var deviceId = GetDeviceId();
-            // 1. El handler devuelve el AuthResult (con el refresh token)
+           
             var auth = await userHandler.CreateAsync(request.Body.User, deviceId, ct);
 
             // 2. Guardamos el refresh token en la cookie
@@ -59,7 +59,7 @@ namespace MiProyecto.WebApi.Controllers
             var refreshToken = Request.Cookies[RefreshTokenCookieName];
 
             if (string.IsNullOrWhiteSpace(refreshToken))
-                return Unauthorized(new { message = "Sesión expirada" });
+                return Unauthorized(new { message = "Sesion expirada" });
 
             var deviceId = GetDeviceId();
 
@@ -151,22 +151,6 @@ namespace MiProyecto.WebApi.Controllers
             };
         }
 
-        //private void SetRefreshTokenCookie(string refreshToken)
-        //{
-        //    var isDev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
-
-        //    var cookieOptions = new CookieOptions
-        //    {
-        //        HttpOnly = true,
-        //        Secure = !isDev,                     // en Development: false (HTTP), en producción: true
-        //        SameSite = isDev
-        //            ? SameSiteMode.Lax              // suficiente para mismo origen vía proxy
-        //            : SameSiteMode.None,            // para prod con front separado en HTTPS
-        //        Expires = DateTimeOffset.UtcNow.AddDays(7),
-        //    };
-
-        //    Response.Cookies.Append(RefreshTokenCookieName, refreshToken, cookieOptions);
-        //}
 
         [HttpPost("logout")]
         public IActionResult Logout()

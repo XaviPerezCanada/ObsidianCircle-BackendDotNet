@@ -52,14 +52,14 @@ public class ExceptionHandlingMiddleware
             
             case InvalidCredentialsException authEx:
                 errorResponse.Status = (int)HttpStatusCode.Unauthorized;
-                errorResponse.Title = "Credenciales inválidas";
+                errorResponse.Title = "Credenciales invalidas";
                 errorResponse.Detail = authEx.Message;
                 response.StatusCode = (int)HttpStatusCode.Unauthorized;
                 break;
 
             case InvalidRefreshTokenException refreshEx:
                 errorResponse.Status = (int)HttpStatusCode.Unauthorized;
-                errorResponse.Title = "Token de refresco inválido";
+                errorResponse.Title = "Token de refresco invalido";
                 errorResponse.Detail = refreshEx.Message;
                 response.StatusCode = (int)HttpStatusCode.Unauthorized;
                 break;
@@ -67,7 +67,7 @@ public class ExceptionHandlingMiddleware
             case UnauthorizedAccessException:
                 errorResponse.Status = (int)HttpStatusCode.Unauthorized;
                 errorResponse.Title = "No autorizado";
-                errorResponse.Detail = "Debe estar autenticado para realizar esta acción.";
+                errorResponse.Detail = "Debe estar autenticado para realizar esta accion.";
                 response.StatusCode = (int)HttpStatusCode.Unauthorized;
                 break;
 
@@ -82,14 +82,14 @@ public class ExceptionHandlingMiddleware
             case ValidationException validationEx:
                 errorResponse.Status = (int)HttpStatusCode.BadRequest;
                 errorResponse.Title = "Error de validación";
-                errorResponse.Detail = "Uno o más errores de validación han ocurrido.";
+                errorResponse.Detail = "Uno o mas errores de validacion han ocurrido.";
                 errorResponse.Errors = validationEx.Errors; 
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
                 break;
 
             case BusinessException businessEx:
                 errorResponse.Status = (int)HttpStatusCode.BadRequest;
-                errorResponse.Title = "Operación no permitida";
+                errorResponse.Title = "Operacion no permitida";
                 errorResponse.Detail = businessEx.Message;
                 errorResponse.ErrorCode = businessEx.ErrorCode;
                 response.StatusCode = (int)HttpStatusCode.BadRequest;

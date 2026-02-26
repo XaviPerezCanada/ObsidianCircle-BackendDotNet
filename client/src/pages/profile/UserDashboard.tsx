@@ -43,7 +43,7 @@ export function UserDashboard() {
   }
 
   // Filtrar solo los juegos que pertenecen al usuario autenticado
-  const misJuegos = juegos.filter(juego => juego.socio === user.socio);
+  const misJuegos = juegos.filter(juego => juego.socio === user.username);
 
   return (
     <div className="pt-20 px-6 pb-6 content-center justify-center flex-row gap-4 items-center" >
@@ -52,7 +52,7 @@ export function UserDashboard() {
           <CardTitle>User Dashboard</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>Bienvenido, {user.name}</p>
+          <p>Bienvenido, {user.username}</p>
           <p>Tipo de usuario: {user.tipo}</p>
         </CardContent>
         <CardContent>
@@ -68,7 +68,7 @@ export function UserDashboard() {
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {misJuegos.map((juego) => {
-              const Icon = getJuegoIcon(juego.tipo);
+              const Icon = getJuegoIcon(juego.genero as 'MESA' | 'ROL');
               return (
                 <div
                   key={juego.id}
@@ -78,7 +78,7 @@ export function UserDashboard() {
                     <Icon className="w-6 h-6 text-primary" />
                   </div>
                   <h3 className="text-lg font-semibold text-foreground mb-2">
-                    {juego.nombre}
+                    {juego.titulo}
                   </h3>
                   {juego.descripcion && (
                     <p className="text-sm text-muted-foreground leading-relaxed mb-2">
@@ -86,19 +86,29 @@ export function UserDashboard() {
                     </p>
                   )}
                   <div className="flex flex-wrap gap-2 mb-2">
-                    <Badge variant="outline">{juego.tipo}</Badge>
+                    <Badge variant="outline">{juego.genero}</Badge>
                     <Badge className={juego.estado === 'ACTIVO' ? 'bg-emerald-600' : 'bg-slate-600'}>
                       {juego.estado}
                     </Badge>
                   </div>
-                  {(juego.min_jugadores || juego.max_jugadores) && (
+                  {(juego.jugadoresMin || juego.jugadoresMax) && (
                     <p className="text-xs text-muted-foreground">
-                      Jugadores: {juego.min_jugadores || '?'} - {juego.max_jugadores || '?'}
+                      Jugadores: {juego.jugadoresMin || '?'} - {juego.jugadoresMax || '?'}
                     </p>
                   )}
-                  {juego.sistema && (
+                  {juego.edadRecomendada && (
                     <p className="text-xs text-muted-foreground">
-                      Sistema: {juego.sistema}
+                      Edad recomendada: {juego.edadRecomendada}
+                    </p>
+                  )}
+                  {juego.duracionMinutos && (
+                    <p className="text-xs text-muted-foreground">
+                      Duracion: {juego.duracionMinutos} minutos
+                    </p>
+                  )}
+                  {juego.categoria && (
+                    <p className="text-xs text-muted-foreground">
+                      Categoria: {juego.categoria}
                     </p>
                   )}
                 </div>

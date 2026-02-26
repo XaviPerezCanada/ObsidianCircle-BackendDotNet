@@ -3,7 +3,7 @@ import type { AuthResponse, AuthUser, LoginRequest, RegisterRequest } from '@/sr
 import { authService } from '@/src/services/auth.service'
 import { authStore } from '@/src/lib/auth-store'
 import { AUTH_SESSION_INVALID_EVENT } from '@/src/lib/api'
-import { toast } from '@/src/components/ui/use-toast'
+import { toast } from '@/src/hooks/use-toast'
 
 type AuthState = {
   accessToken: string | null
@@ -144,7 +144,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (data: LoginRequest) => {
     const res = await authService.login(data)
+    console.log('LOGIN res.data =>', res.data) 
     const tokens = extractTokens(res.data ?? {})
+    console.log('LOGIN tokens.accessToken =', tokens.accessToken)
     const user = normalizeAuthUser(res.data?.user)
     
     // Guardar en store en memoria (no localStorage)

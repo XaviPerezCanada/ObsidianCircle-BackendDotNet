@@ -13,13 +13,11 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    strictPort: false,
     proxy: {
       '/api': {
-        // API HTTP en 5222; si usas HTTPS en 7200, cambia a 'https://localhost:7200'
-        target: 'http://localhost:5222',
+        target: 'https://localhost:7200',
         changeOrigin: true,
-        secure: false,
+        secure: false,        // para certificado de desarrollo
       },
     },
   },

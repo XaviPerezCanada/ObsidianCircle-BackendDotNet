@@ -3,16 +3,18 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/src/comp
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/src/components/ui/select";
-import { juegoService } from "@/src/services/juego.service";
-import { toast } from "@/src/components/ui/use-toast";
-
+import { juegoService, type CreateJuegoRequest } from "@/src/services/juego.service";
+import { toast } from "@/src/hooks/use-toast";
+import { useAuth } from "@/src/context/auth-context";
 
 interface AddArticleProps {
   onSuccess?: () => void;
 }
 
 export function AddArticle({ onSuccess }: AddArticleProps) {
-    const [nombre, setNombre] = useState("");
+    const { user } = useAuth();
+
+    const [titulo, setTitulo] = useState("");
     const [content, setContent] = useState("");
     const [minPlayers, setMinPlayers] = useState("");
     const [maxPlayers, setMaxPlayers] = useState("");
@@ -26,8 +28,6 @@ export function AddArticle({ onSuccess }: AddArticleProps) {
     const [estado, setEstado] = useState<"ACTIVO" | "INACTIVO">("ACTIVO");
     const [loading, setLoading] = useState(false);
 
-
-
     useEffect(() => {
         const now = new Date();
         const formattedDate = now.toISOString().split('T')[0]; // Formato YYYY-MM-DD
@@ -40,7 +40,7 @@ export function AddArticle({ onSuccess }: AddArticleProps) {
         if (maxPlayers && parseInt(value) > parseInt(maxPlayers)) {
             setMaxPlayers("");
         }
-    }
+    };
 
     const handleMaxPlayersChange = (value: string) => {
         setMaxPlayers(value);
@@ -48,13 +48,13 @@ export function AddArticle({ onSuccess }: AddArticleProps) {
         if (minPlayers && parseInt(value) < parseInt(minPlayers)) {
             setMinPlayers("");
         }
-    }
+    };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         
         // Validaciones básicas
-        if (!nombre.trim()) {
+        if (!titulo.trim()) {
             toast({
                 title: 'Error',
                 description: 'El nombre es requerido',
@@ -72,20 +72,43 @@ export function AddArticle({ onSuccess }: AddArticleProps) {
             return;
         }
 
+        if (!minPlayers || !maxPlayers) {
+            toast({
+                title: 'Error',
+                description: 'Debes indicar el número mínimo y máximo de jugadores',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        const socio = user?.username || user?.slug || user?.email;
+        if (!socio) {
+            toast({
+                title: 'Error',
+                description: 'No se pudo determinar el socio. Inicia sesión de nuevo.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
         setLoading(true);
 
         try {
-            const juegoData = {
-                nombre: nombre.trim(),
+            const jugadoresMin = parseInt(minPlayers, 10);
+            const jugadoresMax = parseInt(maxPlayers, 10);
+
+            const juegoData: CreateJuegoRequest = {
+                Titulo: titulo.trim(),
+                Socio: socio,
+                JugadoresMin: jugadoresMin,
+                JugadoresMax: jugadoresMax,
                 descripcion: content.trim() || undefined,
-                tipo: tipo as 'MESA' | 'ROL',
-                min_jugadores: minPlayers ? parseInt(minPlayers) : undefined,
-                max_jugadores: maxPlayers ? parseInt(maxPlayers) : undefined,
-                edad_minima: edad_minima ? parseInt(edad_minima) : undefined,
-                duracion_min: duracion_min ? parseInt(duracion_min) : undefined,
+                tipo: tipo as "MESA" | "ROL",
+                edad_minima: edad_minima ? parseInt(edad_minima, 10) : undefined,
+                duracion_min: duracion_min ? parseInt(duracion_min, 10) : undefined,
                 sistema: sistema.trim() || undefined,
                 ambientacion: ambientacion.trim() || undefined,
-                nivel_inicial: nivel_inicial ? parseInt(nivel_inicial) : undefined,
+                nivel_inicial: nivel_inicial ? parseInt(nivel_inicial, 10) : undefined,
                 estado: estado,
             };
 
@@ -97,7 +120,7 @@ export function AddArticle({ onSuccess }: AddArticleProps) {
             });
 
             // Limpiar formulario
-            setNombre("");
+            setTitulo("");
             setContent("");
             setMinPlayers("");
             setMaxPlayers("");
@@ -114,11 +137,20 @@ export function AddArticle({ onSuccess }: AddArticleProps) {
                 onSuccess();
             }
         } catch (error: any) {
-            const errorMessage = error?.response?.data?.message || 'Error al agregar juego';
+            const backendErrors = error?.response?.data?.errors;
+            const backendTitle = error?.response?.data?.title;
+
+            const errorMessage =
+                backendErrors?.Socio?.[0] ||
+                backendErrors?.Titulo?.[0] ||
+                backendTitle ||
+                error?.response?.data?.message ||
+                "Error al agregar juego";
+
             toast({
-                title: 'Error',
+                title: "Error",
                 description: errorMessage,
-                variant: 'destructive',
+                variant: "destructive",
             });
         } finally {
             setLoading(false);
@@ -147,8 +179,8 @@ export function AddArticle({ onSuccess }: AddArticleProps) {
                     <Input 
                         type="text" 
                         placeholder="Nombre del Juego *" 
-                        value={nombre} 
-                        onChange={(e) => setNombre(e.target.value)} 
+                        value={titulo} 
+                        onChange={(e) => setTitulo(e.target.value)} 
                         required
                     />
                     <Input 

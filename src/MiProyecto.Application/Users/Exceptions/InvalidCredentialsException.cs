@@ -6,7 +6,7 @@ namespace MiProyecto.Application.Users.Exceptions
 {
     public class InvalidCredentialsException : Exception
     {
-        public InvalidCredentialsException() : base("Correo electrónico o contraseña incorrectos.") { }
+        public InvalidCredentialsException() : base("The Credentials are invalid, try with another account") { }
     }
     public class ConflictException : Exception
     {

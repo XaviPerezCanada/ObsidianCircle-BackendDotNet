@@ -31,6 +31,7 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  console.log('API config.headers =>', config.headers)
 
   return config
 })
@@ -45,7 +46,11 @@ api.interceptors.response.use(
       const url = error.config?.url ?? ''
       // Si falla el propio refresh, NO limpies sesión automáticamente:
       // en dev (React StrictMode) puede haber un doble refresh y el 2º falla por rotación.
-      if (!url.includes('/Auth/refresh')) {
+      // Además, para endpoints como /Profile dejamos que el propio hook lo gestione.
+      const isRefresh = url.includes('/Auth/refresh')
+      const isProfile = url.includes('/Profile')
+
+      if (!isRefresh && !isProfile) {
         authStore.clear()
         window.dispatchEvent(new CustomEvent(AUTH_SESSION_INVALID_EVENT))
       }

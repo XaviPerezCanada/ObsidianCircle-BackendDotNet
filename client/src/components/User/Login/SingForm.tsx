@@ -4,6 +4,7 @@ import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import { useLogin } from "@/src/hooks/useAuth";
+import { useToast } from "@/src/hooks/use-toast";
 import {
   Card,
   CardHeader,
@@ -21,6 +22,7 @@ export function SignForm({ onSuccess }: SignFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { login } = useLogin();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,10 +35,23 @@ export function SignForm({ onSuccess }: SignFormProps) {
       await login(loginData);
       console.log("Login exitoso:", { email, password });
       if (onSuccess) onSuccess();
-    } catch (error) {
-      console.error(" Error en el login:", error);
+    } catch (error: any) {
+      console.error("Error en el login:", error);
+
+     
+      const backendDetail =
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        error?.message;
+
+      toast({
+        variant: "destructive",
+        title: "Error al iniciar sesión",
+        description:
+          backendDetail ||
+          "Credenciales incorrectas o usuario no válido.",
+      });
     }
-    console.log("Iniciar sesión:", { email, password });
   };
 
   return (

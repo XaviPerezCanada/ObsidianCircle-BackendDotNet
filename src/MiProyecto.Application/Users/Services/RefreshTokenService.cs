@@ -63,7 +63,7 @@ public class RefreshTokenService(
 
         // Verificar versión de sesión (revocación global)
         if (!session.IsValidForVersion(user.SessionVersion))
-            throw new InvalidRefreshTokenException("Sesión invalidada por cambio de versión");
+            throw new InvalidRefreshTokenException("Sesion invalidada por cambio de version");
 
         // Verificar que no esté revocada
         if (session.Revoked)
@@ -74,7 +74,7 @@ public class RefreshTokenService(
         {
             // Posible robo de token - revocar toda la familia
             await refreshSessionRepository.RevokeByFamilyIdAsync(session.FamilyId, ct);
-            throw new InvalidRefreshTokenException("Dispositivo no coincide - sesión revocada por seguridad");
+            throw new InvalidRefreshTokenException("Dispositivo no coincide - sesion revocada por seguridad");
         }
 
         // Verificar si el token ya fue usado (one-time use)
@@ -85,7 +85,7 @@ public class RefreshTokenService(
         {
             // Token reutilizado - revocar toda la familia
             await refreshSessionRepository.RevokeByFamilyIdAsync(session.FamilyId, ct);
-            throw new InvalidRefreshTokenException("Token reutilizado - sesión revocada por seguridad");
+            throw new InvalidRefreshTokenException("Token reutilizado - sesion revocada por seguridad");
         }
 
         // Rotar token (one-time use)

@@ -10,10 +10,12 @@ import { useAuth } from "@/src/context/auth-context";
 import { toast } from "@/src/components/ui/use-toast";
 
 const navLinks = [
-  { label: "Aventuras", href: "/shop" },
+  
   // La URL real para "Hoja de Personaje" se decide en función de si el usuario está logueado
-  { label: "Hoja de Personaje", href: "#bestiary" },
-  { label: "Comunidad", href: "#community" },
+  { label: "Hoja de Personaje", href: "/profile" },
+  { label: "Juegos ", href: "/shop/games" },
+  { label: "Salas de juego", href: "/shop/rooms" },
+  { label: "Eventos", href: "/shop/events" },
   { label: "Admin", href: "/admin-dashboard" },
 ];
 
@@ -27,6 +29,9 @@ export function Navbar() {
  
     if (link.label === "Admin") {
       return isAuthenticated && user?.type === "ADMIN"; 
+    }
+    if (link.label === "Hoja de Personaje") {
+      return isAuthenticated;
     }
    
     return true;
