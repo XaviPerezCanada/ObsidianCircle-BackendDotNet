@@ -37,7 +37,11 @@ export default function DetailsReservation() {
     reservations: reservasDelDia,
     loading: reservasLoading,
     error: reservasError,
+    refetch: refetchReservasDelDia,
   } = useReservationsForDay(selectedDate, room?.id);
+
+  // Solo reservas confirmadas/activas para mostrar (las canceladas no ocupan sitio ni se listan aquí)
+  const reservasActivasDelDia = reservasDelDia.filter((r) => r.estado !== "CANCELADA");
 
   // Cargar sala por slug (param o por defecto)
   useEffect(() => {
@@ -109,16 +113,20 @@ export default function DetailsReservation() {
       });
       navigate("/user-dashboard");
     } catch (err: any) {
-      const msg =
-        err.response?.data?.error ??
-        err.response?.data?.message ??
-        err.message ??
-        "No se pudo crear la reserva.";
+      const status = err.response?.status;
+      const isConflict = status === 409;
+      const msg = isConflict
+        ? "El recurso ya no está disponible. Otra persona pudo haber reservado esa franja. Actualizando la lista…"
+        : (err.response?.data?.error ??
+           err.response?.data?.message ??
+           err.message ??
+           "No se pudo crear la reserva.");
       toast({
-        title: "Error al reservar",
+        title: isConflict ? "No se pudo completar la reserva" : "Error al reservar",
         description: String(msg),
         variant: "destructive",
       });
+      if (isConflict && refetchReservasDelDia) refetchReservasDelDia();
     } finally {
       setIsSubmitting(false);
     }
@@ -213,9 +221,9 @@ export default function DetailsReservation() {
                 <p className="text-sm text-destructive text-center py-4">
                   {reservasError}
                 </p>
-              ) : reservasDelDia.length > 0 ? (
+              ) : reservasActivasDelDia.length > 0 ? (
                 <div className="space-y-3">
-                  {reservasDelDia.map((reserva) => {
+                  {reservasActivasDelDia.map((reserva) => {
                     const franjaLabel =
                       FRANJAS.find((f) => f.value === reserva.franja_id)
                         ?.label ?? reserva.franja_id;
@@ -243,15 +251,7 @@ export default function DetailsReservation() {
                                 </span>
                               </CardDescription>
                             </div>
-                            <Badge
-                              variant={
-                                reserva.estado === "CONFIRMADA"
-                                  ? "default"
-                                  : "secondary"
-                              }
-                            >
-                              {reserva.estado === "CANCELADA" ? "Cancelada" : "Confirmada"}
-                            </Badge>
+                            <Badge variant="default">Confirmada</Badge>
                           </div>
                         </CardHeader>
                       </Card>

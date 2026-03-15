@@ -66,7 +66,7 @@ public class ReservationsController : ControllerBase
         }
         return CreatedAtAction(
             nameof(GetBySlug),
-            new { slug = result.Value!.Slug },
+            new { slugOrId = result.Value!.Slug },
             result.Value
         );
     }

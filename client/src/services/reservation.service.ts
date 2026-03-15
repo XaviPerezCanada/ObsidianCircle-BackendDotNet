@@ -27,7 +27,7 @@ export type CreateReservationRequest = {
 
 export type UpdateReservationRequest = Partial<Omit<CreateReservationRequest, 'slug'>>
 
-// Respuesta del backend (ReservationResponse)
+// Respuesta del backend (ReservationResponse) - estado puede ser número (0/1) o string ("Active"/"Cancelled")
 type ReservationResponseDto = {
   id: string
   slug: string
@@ -35,8 +35,14 @@ type ReservationResponseDto = {
   userId: string
   date: string
   slot: TimeSlot
-  estado: number // 0 Active, 1 Cancelled - o string según serialización
+  estado: number | string
   boardGameId?: number | null
+}
+
+function isCancelled(estado: number | string): boolean {
+  if (typeof estado === 'number') return estado === 1
+  if (typeof estado === 'string') return estado === 'Cancelled' || estado === 'CANCELADA'
+  return false
 }
 
 const mapFromDto = (dto: ReservationResponseDto): Reserva => ({
@@ -47,7 +53,7 @@ const mapFromDto = (dto: ReservationResponseDto): Reserva => ({
   juego_id: dto.boardGameId ?? null,
   fecha: dto.date,
   franja_id: dto.slot,
-  estado: dto.estado === 1 ? 'CANCELADA' : 'CONFIRMADA',
+  estado: isCancelled(dto.estado) ? 'CANCELADA' : 'CONFIRMADA',
   notas: null,
   created_at: undefined,
 })
