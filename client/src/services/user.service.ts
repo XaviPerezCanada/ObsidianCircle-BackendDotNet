@@ -2,6 +2,26 @@ import { api } from '@/src/lib/api'
 
 // ------- Tipos catálogo usuarios (admin/listado) -------
 
+/** Respuesta de GET /api/admin/users (backend .NET) */
+export type AdminUserListItem = {
+  username: string
+  email: string
+  slug: string
+  type: string
+  status: 'Active' | 'Inactive' | 'UnderMaintenance' | string
+  bio?: string | null
+  image?: string | null
+}
+
+export type AdminUpdateUserRequest = Partial<{
+  username: string
+  email: string
+  bio: string | null
+  image: string | null
+  type: 'BASICO' | 'SOCIO' | 'ADMIN'
+  active: boolean
+}>
+
 export type CatalogUser = {
   id: number
   slug: string
@@ -58,6 +78,25 @@ type UserEnvelope<T> = {
 
 export const userService = {
   // ---- Endpoints de administración / catálogo ----
+  /** Lista todos los usuarios (solo admin). GET /api/admin/users */
+  getAllAdmin: async (): Promise<AdminUserListItem[]> => {
+    const res = await api.get<AdminUserListItem[]>('/admin/Users')
+    return res.data
+  },
+
+  /** Actualiza un usuario (solo admin). PUT /api/admin/Users/{slug} */
+  updateAdmin: async (slug: string, data: AdminUpdateUserRequest): Promise<AdminUserListItem> => {
+    const res = await api.put<AdminUserListItem>(`/admin/Users/${encodeURIComponent(slug)}`, {
+      username: data.username,
+      email: data.email,
+      bio: data.bio,
+      image: data.image,
+      type: data.type,
+      active: data.active,
+    })
+    return res.data
+  },
+
   getAll: async () => {
     const res = await api.get<{ data: CatalogUser[] }>('/usuarios')
     return res.data.data

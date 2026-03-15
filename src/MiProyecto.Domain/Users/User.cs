@@ -88,6 +88,14 @@ public class User
         UpdateModifiedAt();
     }
 
+    public void SetType(UserType type)
+    {
+        if (type is null) throw new ArgumentNullException(nameof(type));
+        if (Type == type) return;
+        Type = type;
+        UpdateModifiedAt();
+    }
+
     public void IncrementSessionVersion()
     {
         SessionVersion++;

@@ -12,7 +12,7 @@ import { toast } from "@/src/components/ui/use-toast";
 const navLinks = [
   
   // La URL real para "Hoja de Personaje" se decide en función de si el usuario está logueado
-  { label: "Hoja de Personaje", href: "/profile" },
+  { label: "Mi Perfil", href: "/profile" },
   { label: "Juegos ", href: "/shop/games" },
   { label: "Salas de juego", href: "/shop/rooms" },
   { label: "Eventos", href: "/shop/events" },
@@ -30,7 +30,7 @@ export function Navbar() {
     if (link.label === "Admin") {
       return isAuthenticated && user?.type === "ADMIN"; 
     }
-    if (link.label === "Hoja de Personaje") {
+    if (link.label === "Mi Perfil") {
       return isAuthenticated;
     }
    
@@ -60,7 +60,7 @@ export function Navbar() {
         <div className="hidden md:flex items-center gap-8">
           {visibleLinks.map((link) => {
             const targetHref =
-              link.label === "Hoja de Personaje" && isAuthenticated
+              link.label === "Mi Perfil" && isAuthenticated
                 ? "/profile"
                 : link.href;
 

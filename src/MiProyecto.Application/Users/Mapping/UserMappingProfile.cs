@@ -1,4 +1,5 @@
 using AutoMapper;
+using MiProyecto.Domain.Common.ValueObjects;
 using MiProyecto.Application.Users.DTOs;
 using MiProyecto.Domain.Users;
 
@@ -12,6 +13,11 @@ public class UserMappingProfile : Profile
         CreateMap<User, UserDto>()
             .ForMember(d => d.Slug, o => o.MapFrom(s => s.Slug.Value))
             .ForMember(d => d.Type, o => o.MapFrom(s => s.Type.Value));
+
+        CreateMap<User, AdminUserDto>()
+            .ForMember(d => d.Slug, o => o.MapFrom(s => s.Slug.Value))
+            .ForMember(d => d.Type, o => o.MapFrom(s => s.Type.Value))
+            .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.Value));
 
         
         CreateMap<NewUserDto, User>()

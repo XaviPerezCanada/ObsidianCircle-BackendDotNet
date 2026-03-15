@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { userService, type CatalogUser } from '@/src/services/user.service'
+import { userService, type AdminUserListItem } from '@/src/services/user.service'
 import { type GameRoom } from '@/src/services/sala.service'
 import { reservationService, type Reserva } from '@/src/services/reservation.service'
 import { planService, type Plan } from '@/src/services/plan.service'
@@ -9,7 +9,7 @@ type DashboardTab = 'usuarios' | 'gameRooms' | 'reservas'
 
 export function useDashboard() {
   const [activeTab, setActiveTab] = useState<DashboardTab>('usuarios')
-  const [users, setUsers] = useState<CatalogUser[]>([])
+  const [users, setUsers] = useState<AdminUserListItem[]>([])
   const [gameRooms, setGameRooms] = useState<GameRoom[]>([])
   const [reservas, setReservas] = useState<Reserva[]>([])
   const [loading, setLoading] = useState(false)
@@ -26,19 +26,20 @@ export function useDashboard() {
       
       // Cargar cada servicio por separado para mejor debugging
       const [u, s, r, p] = await Promise.allSettled([
-        userService.getAll(),
+        userService.getAllAdmin(),
         gameRoomQueries.getAll(), // Usar query en lugar del servicio directo
         reservationService.getAll(),
         planService.getAll(),
       ])
       
-      // Procesar usuarios
+      // Procesar usuarios (GET /api/admin/users)
       if (u.status === 'fulfilled') {
         console.log('✅ Usuarios cargados:', u.value.length)
         setUsers(u.value)
       } else {
         console.error('❌ Error cargando usuarios:', u.reason)
         setUsers([])
+        setError(prev => prev || `Usuarios: ${u.reason?.message ?? 'Error al cargar'}`)
       }
       
       // Procesar gameRooms usando queries
@@ -100,10 +101,10 @@ export function useDashboard() {
     if (!search) return true
     const term = search.toLowerCase()
     return (
-      u.nombre.toLowerCase().includes(term) ||
+      u.username.toLowerCase().includes(term) ||
       u.email.toLowerCase().includes(term) ||
       u.slug.toLowerCase().includes(term) ||
-      u.tipo.toLowerCase().includes(term)
+      u.type.toLowerCase().includes(term)
     )
   })
 

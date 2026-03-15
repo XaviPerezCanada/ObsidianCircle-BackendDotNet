@@ -2,7 +2,8 @@ import type { Juego } from "@/src/services/juego.service";
 import { Card, CardContent, CardHeader } from "@/src/components/ui/card";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
-import { UsersIcon, UsersRound, CalendarDays } from "lucide-react";
+import { UsersIcon, UsersRound, Timer } from "lucide-react";
+import { Link } from "react-router-dom";
 
 type CardCarouselProps = {
   juegos: Juego[];
@@ -24,9 +25,10 @@ export default function CardCarousel({ juegos }: CardCarouselProps) {
           key={juego.id}
           className="overflow-hidden group hover:border-primary/40 transition-colors"
         >
+          <h2 className="text-2xl text-center font-bold">{juego.titulo}</h2>
           <div className="aspect-[4/3] bg-muted overflow-hidden">
             <img
-              src={juego.imagenUrl || "/placeholder.svg"}
+              src={juego.imagenUrl || "/images/juegos/Catan.jpg"}
               alt={juego.titulo}
               loading="lazy"
               decoding="async"
@@ -36,8 +38,14 @@ export default function CardCarousel({ juegos }: CardCarouselProps) {
               }}
             />
           </div>
+          <CardContent className="pt-0">
+            <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <Timer className="w-4 h-4 shrink-0" />
+              {juego.duracionMinutos} minutos
+            </p>
+          </CardContent>
           <CardHeader className="pb-2">
-            <h3 className="font-semibold text-lg line-clamp-2">{juego.titulo}</h3>
+            <p className="text-sm text-muted-foreground line-clamp-3">{juego.descripcion}</p>
             <div className="flex flex-wrap gap-1.5">
               {juego.categoria && (
                 <Badge variant="secondary" className="text-xs">
@@ -64,16 +72,18 @@ export default function CardCarousel({ juegos }: CardCarouselProps) {
             )}
           
           </CardContent>
-          <Button variant="outline" className="w-75 mt-2 hover:bg-primary/10" onClick={() => {
-            // navigate(`/shop/${juego.slug}`);
-          }}>
-            <UsersIcon className="w-4 h-4" /> Ver partidas abiertas
-          </Button>
-          <Button variant="outline" className="w-75 mt-2 hover:bg-primary/10" onClick={() => {
-            // navigate(`/shop/${juego.slug}`);
-          }}>
-            <CalendarDays className="w-4 h-4" /> Realizar una reserva para este juego
-          </Button>
+          <div className="flex flex-col items-center gap-2 mt-2">
+            <Button asChild variant="outline" size="sm" className="hover:bg-primary/10">
+              <Link to={`/shop/events?juego=${encodeURIComponent(juego.slug)}`}>
+                <UsersIcon className="w-3.5 h-3.5 mr-1.5" /> Ver partidas abiertas
+              </Link>
+            </Button>
+            {/* <Button variant="outline" size="sm" className="hover:bg-primary/10" onClick={() => {
+              // navigate(`/shop/${juego.slug}`);
+            }}>
+              <CalendarDays className="w-3.5 h-3.5 mr-1.5" /> Realizar una reserva
+            </Button> */}
+          </div>
           
             
         </Card>

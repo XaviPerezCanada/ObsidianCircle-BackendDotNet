@@ -1,27 +1,17 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useJuegoSearch } from "@/src/hooks/useJuegoSearch";
 import { Button } from "@/src/components/ui/button";
+import type { Juego } from "@/src/services/juego.service";
 import CardCarousel from "./card-carousel";
 
 export default function CarrouselList() {
   const { juegos, loading, error, totalCount } = useJuegoSearch();
-  const [selectedIndex, setSelectedIndex] = useState(0);
-
-  useEffect(() => {
-    setSelectedIndex(0);
+  const juegosKey = useMemo(() => {
+    if (!juegos?.length) return "empty";
+    const first = juegos[0]?.slug ?? juegos[0]?.titulo ?? "";
+    const last = juegos[juegos.length - 1]?.slug ?? juegos[juegos.length - 1]?.titulo ?? "";
+    return `${juegos.length}:${first}:${last}`;
   }, [juegos]);
-
-  const selectedJuego = juegos?.length ? juegos[selectedIndex] : null;
-
-  const previousJuegoHandler = () => {
-    if (!juegos?.length) return;
-    setSelectedIndex((i) => (i === 0 ? juegos.length - 1 : i - 1));
-  };
-
-  const nextJuegoHandler = () => {
-    if (!juegos?.length) return;
-    setSelectedIndex((i) => (i === juegos.length - 1 ? 0 : i + 1));
-  };
 
   if (loading) {
     return (
@@ -37,6 +27,32 @@ export default function CarrouselList() {
       </div>
     );
   }
+
+  return (
+    <CarouselWithState key={juegosKey} juegos={juegos ?? []} totalCount={totalCount} />
+  );
+}
+
+function CarouselWithState({
+  juegos,
+  totalCount,
+}: {
+  juegos: Juego[];
+  totalCount: number;
+}) {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const selectedJuego = juegos?.length ? juegos[selectedIndex] : null;
+
+  const previousJuegoHandler = () => {
+    if (!juegos?.length) return;
+    setSelectedIndex((i) => (i === 0 ? juegos.length - 1 : i - 1));
+  };
+
+  const nextJuegoHandler = () => {
+    if (!juegos?.length) return;
+    setSelectedIndex((i) => (i === juegos.length - 1 ? 0 : i + 1));
+  };
 
   return (
     <div className="space-y-10 max-w-7xl mx-auto">
@@ -56,7 +72,7 @@ export default function CarrouselList() {
             <div className="flex-1 min-w-0 flex items-center gap-6">
               <div className="aspect-video w-48 shrink-0 overflow-hidden rounded-lg bg-muted">
                 <img
-                  src={selectedJuego.imagenUrl || "/placeholder.svg"}
+                  src={selectedJuego.imagenUrl || "/images/juegos/Catan.jpg"}
                   alt={selectedJuego.titulo}
                   loading="lazy"
                   decoding="async"

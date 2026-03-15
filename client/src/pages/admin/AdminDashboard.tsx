@@ -40,6 +40,8 @@ import type { GameRoom } from '@/src/services/sala.service'
 import { toast } from '@/src/hooks/use-toast'
 // Importar comandos de prueba (disponibles en consola como testGameRooms)
 import '@/src/pages/admin/command/commandGameRooms'
+import { UserEditDialog } from './components/UserEditDialog'
+import type { AdminUserListItem } from '@/src/services/user.service'
 
 export function AdminDashboard() {
   useAuth()
@@ -62,6 +64,8 @@ export function AdminDashboard() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [roomToDelete, setRoomToDelete] = useState<GameRoom | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [userEditOpen, setUserEditOpen] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<AdminUserListItem | null>(null)
 
   useEffect(() => {
     void loadAll()
@@ -169,6 +173,11 @@ export function AdminDashboard() {
     }
   }
 
+  const handleUserEdit = (u: AdminUserListItem) => {
+    setSelectedUser(u)
+    setUserEditOpen(true)
+  }
+
   if (user?.user?.tipo !== 'ADMIN') {
     return (
       <>
@@ -248,24 +257,31 @@ export function AdminDashboard() {
                   <TableHead>Slug</TableHead>
                   <TableHead>Rol</TableHead>
                   <TableHead>Estado</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell>{u.nombre}</TableCell>
+                  <TableRow key={u.slug || u.email}>
+                    <TableCell>{u.username}</TableCell>
                     <TableCell>{u.email}</TableCell>
                     <TableCell className="font-mono text-xs">{u.slug}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{u.tipo}</Badge>
+                      <Badge variant="outline">{u.type}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge className={u.status === 'ACTIVE' ? 'bg-emerald-600' : 'bg-slate-600'}>
-                        {u.status === 'ACTIVE' ? 'ACTIVO' : 'INACTIVO'}
+                      <Badge
+                        className={
+                          (u.status ?? '').toString() === 'Active'
+                            ? 'bg-emerald-600'
+                            : 'bg-destructive'
+                        }
+                      >
+                        {(u.status ?? '—').toString() === 'Active' ? 'ACTIVO' : 'INACTIVO'}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button variant="outline" size="icon">
+                      <Button variant="outline" size="icon" onClick={() => handleUserEdit(u)}>
                         <Edit className="w-4 h-4" />
                       </Button>
                     </TableCell>
@@ -274,7 +290,7 @@ export function AdminDashboard() {
               </TableBody>
               <TableCaption>Total usuarios: {users.length}</TableCaption>
               <TableCaption>
-                <Button className="w-fit">Crear usuario</Button>
+                {/* <Button className="w-fit">Crear usuario</Button> */}
               </TableCaption>
             </Table>
           </TabsContent>
@@ -487,6 +503,16 @@ export function AdminDashboard() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <UserEditDialog
+      open={userEditOpen}
+      onOpenChange={(open) => {
+        setUserEditOpen(open)
+        if (!open) setSelectedUser(null)
+      }}
+      user={selectedUser}
+      onSuccess={loadAll}
+    />
     </>
   )
   }

@@ -135,9 +135,9 @@ export const ProfilePage = () => {
               <Button variant="outline" type="button" onClick={logout}>
                 Logout
               </Button>
-              <Button variant="destructive" type="button" onClick={logoutAll}>
+              {/* <Button variant="destructive" type="button" onClick={logoutAll}>
                 Logout en todos los dispositivos
-              </Button>
+              </Button> */}
             </div>
           </CardFooter>
         </form>

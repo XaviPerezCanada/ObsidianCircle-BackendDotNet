@@ -6,6 +6,7 @@ import { Badge } from "@/src/components/ui/badge";
 import { Clock, Users, Calendar as CalendarIcon, Check, X } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale/es";
+import { useJuego } from "@/src/hooks/useJuego";
 
 // Mockup de reservas existentes
 interface MockReservation {
@@ -16,16 +17,6 @@ interface MockReservation {
   juego: string;
   jugadores: number;
   estado: "activa" | "completada" | "cancelada";
-}
-
-// Mockup de juegos disponibles
-interface MockJuego {
-  id: string;
-  titulo: string;
-  categoria: string;
-  jugadoresMin: number;
-  jugadoresMax: number;
-  imagenUrl?: string;
 }
 
 // Mockup de datos
@@ -59,53 +50,17 @@ const mockReservas: MockReservation[] = [
   },
 ];
 
-const mockJuegos: MockJuego[] = [
-  {
-    id: "1",
-    titulo: "Catan",
-    categoria: "Estrategia",
-    jugadoresMin: 3,
-    jugadoresMax: 4,
-  },
-  {
-    id: "2",
-    titulo: "Ticket to Ride",
-    categoria: "Familiar",
-    jugadoresMin: 2,
-    jugadoresMax: 5,
-  },
-  {
-    id: "3",
-    titulo: "Wingspan",
-    categoria: "Estrategia",
-    jugadoresMin: 1,
-    jugadoresMax: 5,
-  },
-  {
-    id: "4",
-    titulo: "Azul",
-    categoria: "Abstracto",
-    jugadoresMin: 2,
-    jugadoresMax: 4,
-  },
-  {
-    id: "5",
-    titulo: "Pandemic",
-    categoria: "Cooperativo",
-    jugadoresMin: 2,
-    jugadoresMax: 4,
-  },
-];
-
 export default function DetailsReservation() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [selectedJuegos, setSelectedJuegos] = useState<string[]>([]);
+  const [selectedJuegos, setSelectedJuegos] = useState<number[]>([]);
   const [selectedSala] = useState({
     name: "Sala Principal",
     description: "Sala espaciosa con capacidad para 8 personas",
     capacity: 8,
     slug: "sala-principal",
   });
+
+  const { juegos, loading, error } = useJuego({ listAll: true });
 
   // Debug: verificar que el componente se renderiza
   console.log("DetailsReservation component rendered");
@@ -122,7 +77,7 @@ export default function DetailsReservation() {
   // Obtener fechas ocupadas para el calendario
   const fechasOcupadas = mockReservas.map((reserva) => reserva.fecha);
 
-  const toggleJuego = (juegoId: string) => {
+  const toggleJuego = (juegoId: number) => {
     setSelectedJuegos((prev) =>
       prev.includes(juegoId)
         ? prev.filter((id) => id !== juegoId)
@@ -277,8 +232,18 @@ export default function DetailsReservation() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {loading && (
+            <p className="text-sm text-muted-foreground mb-2">
+              Cargando juegos disponibles...
+            </p>
+          )}
+          {error && (
+            <p className="text-sm text-destructive mb-2">
+              {error}
+            </p>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mockJuegos.map((juego) => {
+            {juegos.map((juego) => {
               const isSelected = selectedJuegos.includes(juego.id);
               return (
                 <Card
@@ -299,13 +264,13 @@ export default function DetailsReservation() {
                     </div>
                     <CardDescription>
                       <Badge variant="secondary" className="text-xs">
-                        {juego.categoria}
+                          {juego.categoria}
                       </Badge>
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className="text-xs text-muted-foreground">
-                      {juego.jugadoresMin} - {juego.jugadoresMax} jugadores
+                        {juego.jugadoresMin ?? "?"} - {juego.jugadoresMax ?? "?"} jugadores
                     </p>
                   </CardContent>
                 </Card>
@@ -317,7 +282,7 @@ export default function DetailsReservation() {
               <p className="text-sm font-medium mb-2">Juegos seleccionados:</p>
               <div className="flex flex-wrap gap-2">
                 {selectedJuegos.map((juegoId) => {
-                  const juego = mockJuegos.find((j) => j.id === juegoId);
+                  const juego = juegos.find((j) => j.id === juegoId);
                   return juego ? (
                     <Badge key={juegoId} variant="default">
                       {juego.titulo}
