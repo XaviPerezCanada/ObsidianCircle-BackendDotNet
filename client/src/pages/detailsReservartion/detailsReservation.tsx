@@ -1,81 +1,74 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Calendar } from "@/src/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
-import { Clock, Users, Calendar as CalendarIcon, Check, X } from "lucide-react";
+import { Clock, Users, Calendar as CalendarIcon, Check, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale/es";
 import { useJuego } from "@/src/hooks/useJuego";
+import { useReservationsForDay } from "@/src/hooks/useReservationsForDay";
+import { gameRoomService, type GameRoom } from "@/src/services/sala.service";
+import { reservationService, type TimeSlot } from "@/src/services/reservation.service";
+import { toast } from "@/src/hooks/use-toast";
 
-// Mockup de reservas existentes
-interface MockReservation {
-  id: string;
-  fecha: Date;
-  horaInicio: string;
-  horaFin: string;
-  juego: string;
-  jugadores: number;
-  estado: "activa" | "completada" | "cancelada";
-}
-
-// Mockup de datos
-const mockReservas: MockReservation[] = [
-  {
-    id: "1",
-    fecha: new Date(2026, 1, 7),
-    horaInicio: "10:00",
-    horaFin: "12:00",
-    juego: "Catan",
-    jugadores: 4,
-    estado: "activa",
-  },
-  {
-    id: "2",
-    fecha: new Date(2026, 1, 7),
-    horaInicio: "14:00",
-    horaFin: "16:00",
-    juego: "Ticket to Ride",
-    jugadores: 3,
-    estado: "activa",
-  },
-  {
-    id: "3",
-    fecha: new Date(2026, 1, 8),
-    horaInicio: "18:00",
-    horaFin: "20:00",
-    juego: "Wingspan",
-    jugadores: 2,
-    estado: "activa",
-  },
+// Franjas horarias del backend (TimeSlot)
+const FRANJAS: { value: TimeSlot; label: string }[] = [
+  { value: "Morning", label: "Mañana" },
+  { value: "Afternoon", label: "Tarde" },
+  { value: "Night", label: "Noche" },
+  { value: "FullDay", label: "Día completo" },
 ];
 
 export default function DetailsReservation() {
+  const { roomSlug } = useParams<{ roomSlug?: string }>();
+  const navigate = useNavigate();
+  const [room, setRoom] = useState<GameRoom | null>(null);
+  const [roomLoading, setRoomLoading] = useState(true);
+  const [roomError, setRoomError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedSlot, setSelectedSlot] = useState<TimeSlot>("Morning");
   const [selectedJuegos, setSelectedJuegos] = useState<number[]>([]);
-  const [selectedSala] = useState({
-    name: "Sala Principal",
-    description: "Sala espaciosa con capacidad para 8 personas",
-    capacity: 8,
-    slug: "sala-principal",
-  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { juegos, loading, error } = useJuego({ listAll: true });
+  const {
+    reservations: reservasDelDia,
+    loading: reservasLoading,
+    error: reservasError,
+  } = useReservationsForDay(selectedDate, room?.id);
 
-  // Debug: verificar que el componente se renderiza
-  console.log("DetailsReservation component rendered");
-
-  // Filtrar reservas por fecha seleccionada
-  const reservasDelDia = selectedDate
-    ? mockReservas.filter(
-        (reserva) =>
-          format(reserva.fecha, "yyyy-MM-dd") ===
-          format(selectedDate, "yyyy-MM-dd")
-      )
-    : [];
-
-  // Obtener fechas ocupadas para el calendario
-  const fechasOcupadas = mockReservas.map((reserva) => reserva.fecha);
+  // Cargar sala por slug (param o por defecto)
+  useEffect(() => {
+    const slug = roomSlug ?? "sala-principal";
+    let cancelled = false;
+    setRoomLoading(true);
+    setRoomError(null);
+    gameRoomService
+      .getBySlug(slug)
+      .then((data) => {
+        if (!cancelled) {
+          setRoom(data);
+        }
+      })
+      .catch((err: any) => {
+        if (!cancelled) {
+          const msg =
+            err.response?.data?.message ??
+            err.response?.data?.detail ??
+            "No se pudo cargar la sala.";
+          setRoomError(String(msg));
+          setRoom(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setRoomLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [roomSlug]);
 
   const toggleJuego = (juegoId: number) => {
     setSelectedJuegos((prev) =>
@@ -85,21 +78,50 @@ export default function DetailsReservation() {
     );
   };
 
-  const handleReservar = () => {
+  const handleReservar = async () => {
+    if (!room) {
+      toast({
+        title: "Error",
+        description: "No hay sala seleccionada.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!selectedDate) {
-      alert("Por favor, selecciona una fecha");
+      toast({
+        title: "Falta la fecha",
+        description: "Selecciona una fecha para la reserva.",
+        variant: "destructive",
+      });
       return;
     }
-    if (selectedJuegos.length === 0) {
-      alert("Por favor, selecciona al menos un juego");
-      return;
+    setIsSubmitting(true);
+    try {
+      await reservationService.create({
+        sala_id: room.id,
+        fecha: format(selectedDate, "yyyy-MM-dd"),
+        franja_id: selectedSlot,
+        juego_id: selectedJuegos.length > 0 ? selectedJuegos[0] : null,
+      });
+      toast({
+        title: "Reserva creada",
+        description: `Reserva para el ${format(selectedDate, "d/M/yyyy")} (${FRANJAS.find((f) => f.value === selectedSlot)?.label ?? selectedSlot}) registrada correctamente.`,
+      });
+      navigate("/user-dashboard");
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.error ??
+        err.response?.data?.message ??
+        err.message ??
+        "No se pudo crear la reserva.";
+      toast({
+        title: "Error al reservar",
+        description: String(msg),
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-    console.log("Reserva:", {
-      sala: selectedSala,
-      fecha: selectedDate,
-      juegos: selectedJuegos,
-    });
-    alert("Reserva realizada (mockup)");
   };
 
   return (
@@ -107,15 +129,30 @@ export default function DetailsReservation() {
       {/* Información de la sala seleccionada */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">{selectedSala.name}</CardTitle>
-          <CardDescription>{selectedSala.description}</CardDescription>
+          {roomLoading && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>Cargando sala...</span>
+            </div>
+          )}
+          {roomError && (
+            <p className="text-destructive">{roomError}</p>
+          )}
+          {room && !roomLoading && (
+            <>
+              <CardTitle className="text-2xl">{room.name}</CardTitle>
+              <CardDescription>{room.description}</CardDescription>
+            </>
+          )}
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Users className="w-4 h-4" />
-            <span>Capacidad: {selectedSala.capacity} personas</span>
-          </div>
-        </CardContent>
+        {room && (
+          <CardContent>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Users className="w-4 h-4" />
+              <span>Capacidad: {room.capacity} personas</span>
+            </div>
+          </CardContent>
+        )}
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -127,8 +164,7 @@ export default function DetailsReservation() {
               Selecciona una fecha
             </CardTitle>
             <CardDescription>
-              Elige el día para tu reserva. Las fechas con reservas existentes
-              están marcadas.
+              Elige el día para tu reserva. Las reservas del día se muestran al lado.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
@@ -137,12 +173,8 @@ export default function DetailsReservation() {
               selected={selectedDate}
               onSelect={setSelectedDate}
               disabled={(date) => date < new Date()}
-              modifiers={{
-                booked: fechasOcupadas,
-              }}
-              modifiersClassNames={{
-                booked: "bg-muted text-muted-foreground",
-              }}
+              modifiers={{}}
+              modifiersClassNames={{}}
               locale={es}
             />
           </CardContent>
@@ -172,42 +204,59 @@ export default function DetailsReservation() {
           </CardHeader>
           <CardContent>
             {selectedDate ? (
-              reservasDelDia.length > 0 ? (
+              reservasLoading ? (
+                <div className="flex items-center justify-center gap-2 py-6 text-muted-foreground">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Cargando reservas del día...</span>
+                </div>
+              ) : reservasError ? (
+                <p className="text-sm text-destructive text-center py-4">
+                  {reservasError}
+                </p>
+              ) : reservasDelDia.length > 0 ? (
                 <div className="space-y-3">
-                  {reservasDelDia.map((reserva) => (
-                    <Card key={reserva.id} className="border-l-4 border-l-primary">
-                      <CardHeader className="pb-2">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <CardTitle className="text-base">
-                              {reserva.juego}
-                            </CardTitle>
-                            <CardDescription className="flex items-center gap-4 mt-1">
-                              <span className="flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                {reserva.horaInicio} - {reserva.horaFin}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Users className="w-3 h-3" />
-                                {reserva.jugadores} jugadores
-                              </span>
-                            </CardDescription>
+                  {reservasDelDia.map((reserva) => {
+                    const franjaLabel =
+                      FRANJAS.find((f) => f.value === reserva.franja_id)
+                        ?.label ?? reserva.franja_id;
+                    const juegoNombre =
+                      reserva.juego_id != null
+                        ? juegos.find((j) => j.id === reserva.juego_id)
+                            ?.titulo
+                        : null;
+                    return (
+                      <Card
+                        key={reserva.id}
+                        className="border-l-4 border-l-primary"
+                      >
+                        <CardHeader className="pb-2">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <CardTitle className="text-base">
+                                {franjaLabel}
+                                {juegoNombre ? ` · ${juegoNombre}` : ""}
+                              </CardTitle>
+                              <CardDescription className="flex items-center gap-4 mt-1">
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {reserva.fecha}
+                                </span>
+                              </CardDescription>
+                            </div>
+                            <Badge
+                              variant={
+                                reserva.estado === "CONFIRMADA"
+                                  ? "default"
+                                  : "secondary"
+                              }
+                            >
+                              {reserva.estado === "CANCELADA" ? "Cancelada" : "Confirmada"}
+                            </Badge>
                           </div>
-                          <Badge
-                            variant={
-                              reserva.estado === "activa"
-                                ? "default"
-                                : reserva.estado === "completada"
-                                  ? "secondary"
-                                  : "destructive"
-                            }
-                          >
-                            {reserva.estado}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                    </Card>
-                  ))}
+                        </CardHeader>
+                      </Card>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-4">
@@ -222,6 +271,35 @@ export default function DetailsReservation() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Franja horaria */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="w-5 h-5" />
+            Franja horaria
+          </CardTitle>
+          <CardDescription>
+            Elige mañana, tarde, noche o día completo para tu reserva.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {FRANJAS.map(({ value, label }) => (
+              <Button
+                key={value}
+                type="button"
+                variant={selectedSlot === value ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedSlot(value)}
+              >
+                {selectedSlot === value && <Check className="w-4 h-4 mr-1" />}
+                {label}
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Selección de juegos */}
       <Card>
@@ -297,8 +375,18 @@ export default function DetailsReservation() {
           <Button variant="outline" onClick={() => setSelectedJuegos([])}>
             Limpiar selección
           </Button>
-          <Button onClick={handleReservar} disabled={!selectedDate || selectedJuegos.length === 0}>
-            Confirmar reserva
+          <Button
+            onClick={handleReservar}
+            disabled={!room || roomLoading || !selectedDate || isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                Confirmando...
+              </>
+            ) : (
+              "Confirmar reserva"
+            )}
           </Button>
         </CardFooter>
       </Card>

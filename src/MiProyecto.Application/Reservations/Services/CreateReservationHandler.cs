@@ -1,4 +1,4 @@
-﻿using MiProyecto.Application.BoardGames.Interfaces;
+using MiProyecto.Application.BoardGames.Interfaces;
 using MiProyecto.Application.Common;
 using MiProyecto.Application.Reservations.Dtos;
 using MiProyecto.Application.Reservations.Interfaces;
@@ -44,6 +44,7 @@ public sealed class CreateReservationHandler
         return Result<ReservationResponse>.Success(new ReservationResponse
         {
             Id = reservation.Id,
+            Slug = reservation.Slug,
             GameRoomId = reservation.GameRoomId,
             UserId = reservation.UserId,
             Date = reservation.Date,

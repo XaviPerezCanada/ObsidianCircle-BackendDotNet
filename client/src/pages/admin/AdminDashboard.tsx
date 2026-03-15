@@ -429,7 +429,7 @@ export function AdminDashboard() {
                               : 'bg-amber-600'
                         }
                       >
-                        {r.estado}
+                        {r.estado === 'CANCELADA' ? 'Cancelada' : 'Confirmada'}
                       </Badge>
                     </TableCell>
                     <TableCell>

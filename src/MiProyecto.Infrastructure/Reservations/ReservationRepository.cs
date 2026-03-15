@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using MiProyecto.Application.Reservations.Interfaces;
 using MiProyecto.Domain.Reservation.Entities;
 using Npgsql;
@@ -27,11 +27,25 @@ public sealed class ReservationRepository : IReservationRepository
             .FirstOrDefaultAsync(r => r.Id == id);
     }
 
+    public async Task<Reservation?> GetBySlugAsync(string slug, CancellationToken ct = default)
+    {
+        return await _db.Reservations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.Slug == slug, ct);
+    }
+
     public async Task<Reservation?> GetByIdWithBlocksAsync(Guid id)
     {
         return await _db.Reservations
             .Include(r => r.Blocks)
             .FirstOrDefaultAsync(r => r.Id == id);
+    }
+
+    public async Task<Reservation?> GetBySlugWithBlocksAsync(string slug, CancellationToken ct = default)
+    {
+        return await _db.Reservations
+            .Include(r => r.Blocks)
+            .FirstOrDefaultAsync(r => r.Slug == slug, ct);
     }
 
     public async Task UpdateAsync(Reservation reservation)
@@ -58,5 +72,31 @@ public sealed class ReservationRepository : IReservationRepository
             
             return (false, true);
         }
+    }
+
+    public async Task<IReadOnlyList<Reservation>> GetByUserIdAsync(Guid userId, CancellationToken ct = default)
+    {
+        return await _db.Reservations
+            .AsNoTracking()
+            .Where(r => r.UserId == userId)
+            .OrderByDescending(r => r.Date)
+            .ToListAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<Reservation>> GetAllAsync(CancellationToken ct = default)
+    {
+        return await _db.Reservations
+            .AsNoTracking()
+            .OrderByDescending(r => r.Date)
+            .ToListAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<Reservation>> GetByDateAndRoomAsync(DateOnly date, Guid gameRoomId, CancellationToken ct = default)
+    {
+        return await _db.Reservations
+            .AsNoTracking()
+            .Where(r => r.Date == date && r.GameRoomId == gameRoomId)
+            .OrderBy(r => r.Franja)
+            .ToListAsync(ct);
     }
 }

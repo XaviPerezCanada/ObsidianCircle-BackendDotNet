@@ -6,9 +6,21 @@ import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/src/components/ui/card";
 import { Dialog, DialogContent } from "@/src/components/ui/dialog";
 import { useJuego } from "@/src/hooks/useJuego";
-import { Dice6, BookOpen } from "lucide-react";
+import { useMyReservations } from "@/src/hooks/useMyReservations";
+import { reservationService, type TimeSlot } from "@/src/services/reservation.service";
+import { Dice6, BookOpen, Calendar, Loader2 } from "lucide-react";
 import { Badge } from "@/src/components/ui/badge";
 import type { Juego } from "@/src/services/juego.service";
+import { format } from "date-fns";
+import { es } from "date-fns/locale/es";
+import { toast } from "@/src/hooks/use-toast";
+
+const FRANJAS: { value: TimeSlot; label: string }[] = [
+  { value: "Morning", label: "Mañana" },
+  { value: "Afternoon", label: "Tarde" },
+  { value: "Night", label: "Noche" },
+  { value: "FullDay", label: "Día completo" },
+];
 
 export function UserDashboard() {
   const { user } = useAuth();
@@ -18,6 +30,7 @@ export function UserDashboard() {
   const [selectedJuego, setSelectedJuego] = useState<Juego | null>(null);
 
   const { juegos, loading, error, getJuegos } = useJuego();
+  const { reservations: misReservas, loading: reservasLoading, error: reservasError, refetch: refetchReservas } = useMyReservations();
 
 
 
@@ -45,7 +58,20 @@ export function UserDashboard() {
   // Función para obtener el icono según el tipo de juego
   const getJuegoIcon = (tipo: 'MESA' | 'ROL') => {
     return tipo === 'MESA' ? Dice6 : BookOpen;
-  }
+  };
+
+  const handleCancelarReserva = async (slug: string) => {
+    try {
+      await reservationService.cancel(slug);
+      toast({ title: "Reserva cancelada", description: "La reserva se ha cancelado correctamente." });
+      refetchReservas();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string; message?: string } } })?.response?.data?.error
+        ?? (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+        ?? "No se pudo cancelar la reserva.";
+      toast({ title: "Error", description: String(msg), variant: "destructive" });
+    }
+  };
 
   if (!user) {
     return <div>No user found</div>;
@@ -79,6 +105,66 @@ export function UserDashboard() {
             <p className="text-muted-foreground">No tienes juegos agregados aún</p>
           )}
         </CardContent>
+
+        {/* Mis reservas */}
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            Mis reservas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {reservasLoading && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Cargando reservas...</span>
+            </div>
+          )}
+          {reservasError && (
+            <p className="text-destructive">{reservasError}</p>
+          )}
+          {!reservasLoading && !reservasError && misReservas.length === 0 && (
+            <p className="text-muted-foreground mb-4">No tienes reservas. Haz una desde la tienda.</p>
+          )}
+          {!reservasLoading && misReservas.length > 0 && (
+            <div className="space-y-3 mb-4">
+              {misReservas.map((r) => {
+                const franjaLabel = FRANJAS.find((f) => f.value === r.franja_id)?.label ?? r.franja_id;
+                return (
+                  <div
+                    key={r.id}
+                    className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-lg border border-border bg-muted/30"
+                  >
+                    <div>
+                      <p className="font-medium">
+                        {format(new Date(r.fecha + "T12:00:00"), "EEEE, d MMM yyyy", { locale: es })}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{franjaLabel}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={r.estado === "CANCELADA" ? "secondary" : "default"}>
+                        {r.estado === "CANCELADA" ? "Cancelada" : "Confirmada"}
+                      </Badge>
+                      {r.estado !== "CANCELADA" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleCancelarReserva(r.slug)}
+                        >
+                          Cancelar
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <Button variant="outline" onClick={() => navigate("/shop/rooms")}>
+            Nueva reserva
+          </Button>
+        </CardContent>
+
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {misJuegos.map((juego) => {

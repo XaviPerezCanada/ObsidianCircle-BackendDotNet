@@ -1,10 +1,13 @@
-﻿using MiProyecto.Domain.Reservation;
+using MiProyecto.Domain.Reservation;
 
 namespace MiProyecto.Domain.Reservation.Entities
 {
     public class Reservation
     {
         public Guid Id { get; private set; }
+        /// <summary>Identificador único para URLs (ej. GET /api/reservations/{slug}).</summary>
+        public string Slug { get; private set; } = default!;
+
         public Guid GameRoomId { get; private set; }
         public Guid UserId { get; private set; }
 
@@ -27,6 +30,7 @@ namespace MiProyecto.Domain.Reservation.Entities
             if (userId == Guid.Empty) throw new ArgumentException("Usuario inválido.");
 
             Id = Guid.NewGuid();
+            Slug = Id.ToString("N");
             GameRoomId = gameRoomId;
             UserId = userId;
             Date = date;

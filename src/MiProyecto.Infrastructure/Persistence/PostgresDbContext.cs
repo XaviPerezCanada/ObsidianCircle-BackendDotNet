@@ -27,6 +27,9 @@ public class PostgresDbContext : DbContext
             b.ToTable("reservations");
             b.HasKey(x => x.Id);
 
+            b.Property(x => x.Slug).IsRequired().HasMaxLength(32);
+            b.HasIndex(x => x.Slug).IsUnique();
+
             b.Property(x => x.Date).HasColumnType("date");
 
             b.HasMany(x => x.Blocks)

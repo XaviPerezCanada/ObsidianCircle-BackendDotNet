@@ -85,8 +85,9 @@ function App() {
                   <Route path="/shop/events" element={<ShopEvents />} />
                   <Route path="/shop/rooms" element={<ShopRoom />} />
 
-                  {/* Temporalmente pública para debug - Mocked routes */}
+                  {/* Reservas: con slug de sala o sin (usa sala por defecto) */}
                   <Route path="/reservation" element={<DetailsReservation />} />
+                  <Route path="/reservation/:roomSlug" element={<DetailsReservation />} />
                   <Route path="/detailsReservation" element={<DetailsReservation />} />
 
                   <Route path="/admin-dashboard" element={<AdminDashboard />} />

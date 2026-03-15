@@ -28,7 +28,7 @@ export function useDashboard() {
       const [u, s, r, p] = await Promise.allSettled([
         userService.getAllAdmin(),
         gameRoomQueries.getAll(), // Usar query en lugar del servicio directo
-        reservationService.getAll(),
+        reservationService.getAllAdmin(),
         planService.getAll(),
       ])
       
