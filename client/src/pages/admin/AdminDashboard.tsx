@@ -38,6 +38,8 @@ import { gameRoomCommands } from '@/src/pages/admin/command/commandGameRooms'
 import { GameRoomFormDialog } from './components/GameRoomFormDialog'
 import type { GameRoom } from '@/src/services/sala.service'
 import { toast } from '@/src/hooks/use-toast'
+import { planService, type Plan } from '@/src/services/plan.service'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/components/ui/select'
 // Importar comandos de prueba (disponibles en consola como testGameRooms)
 import '@/src/pages/admin/command/commandGameRooms'
 import { UserEditDialog } from './components/UserEditDialog'
@@ -51,6 +53,7 @@ export function AdminDashboard() {
     users,
     gameRooms,
     reservas,
+    planes,
     loading,
     error,
     search,
@@ -66,6 +69,13 @@ export function AdminDashboard() {
   const [actionLoading, setActionLoading] = useState(false)
   const [userEditOpen, setUserEditOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<AdminUserListItem | null>(null)
+  const [planDialogOpen, setPlanDialogOpen] = useState(false)
+  const [planActionLoading, setPlanActionLoading] = useState(false)
+  const [planForm, setPlanForm] = useState<{ nombre: string; precio: string; periodo: Plan['periodo'] }>({
+    nombre: '',
+    precio: '',
+    periodo: 'MENSUAL',
+  })
 
   useEffect(() => {
     void loadAll()
@@ -451,8 +461,48 @@ export function AdminDashboard() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nombre</TableHead>
+                  <TableHead>Slug</TableHead>
+                  <TableHead>Precio</TableHead>
+                  <TableHead>Período</TableHead>
+                  <TableHead>Activo</TableHead>
                 </TableRow>
               </TableHeader>
+              <TableBody>
+                {planes.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      {loading ? 'Cargando...' : 'No hay planes creados todavía'}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  planes.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell>{p.nombre}</TableCell>
+                      <TableCell className="font-mono text-xs">{p.slug}</TableCell>
+                      <TableCell>{(p.precio_cent / 100).toFixed(2)} €</TableCell>
+                      <TableCell>{p.periodo}</TableCell>
+                      <TableCell>
+                        <Badge className={p.activo === 1 ? 'bg-emerald-600' : 'bg-slate-600'}>
+                          {p.activo === 1 ? 'ACTIVO' : 'INACTIVO'}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+              <TableCaption>Total planes: {planes.length}</TableCaption>
+              <TableCaption>
+                <Button
+                  className="w-fit"
+                  onClick={() => {
+                    setPlanForm({ nombre: '', precio: '', periodo: 'MENSUAL' })
+                    setPlanDialogOpen(true)
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Crear plan
+                </Button>
+              </TableCaption>
             </Table>
           </TabsContent>
         </Tabs>
@@ -503,6 +553,106 @@ export function AdminDashboard() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+      {/* Diálogo para crear plan de suscripción */}
+      <Dialog open={planDialogOpen} onOpenChange={setPlanDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Crear plan de suscripción</DialogTitle>
+            <DialogDescription>
+              Define un nuevo plan que luego podrás usar en la página de pago.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Nombre</label>
+              <Input
+                value={planForm.nombre}
+                onChange={(e) => setPlanForm((prev) => ({ ...prev, nombre: e.target.value }))}
+                placeholder="Plan Básico"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Precio (EUR)</label>
+              <Input
+                type="number"
+                min={0}
+                value={planForm.precio}
+                onChange={(e) => setPlanForm((prev) => ({ ...prev, precio: e.target.value }))}
+                placeholder="9.99"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Periodo</label>
+              <Select
+                value={planForm.periodo}
+                onValueChange={(value: Plan['periodo']) =>
+                  setPlanForm((prev) => ({ ...prev, periodo: value }))
+                }
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Selecciona periodo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MENSUAL">Mensual</SelectItem>
+                  <SelectItem value="TRIMESTRAL">Trimestral</SelectItem>
+                  <SelectItem value="ANUAL">Anual</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setPlanDialogOpen(false)}
+              disabled={planActionLoading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!planForm.nombre || !planForm.precio) {
+                  toast({
+                    title: 'Datos incompletos',
+                    description: 'Introduce nombre y precio del plan.',
+                    variant: 'destructive',
+                  })
+                  return
+                }
+                setPlanActionLoading(true)
+                try {
+                  await planService.create({
+                    nombre: planForm.nombre,
+                    precio_cent: Math.round(parseFloat(planForm.precio.replace(',', '.')) * 100),
+                    periodo: planForm.periodo,
+                    activo: 1,
+                  })
+                  toast({
+                    title: 'Plan creado',
+                    description: `El plan "${planForm.nombre}" se ha creado correctamente.`,
+                  })
+                  setPlanDialogOpen(false)
+                  await loadAll()
+                } catch (error: any) {
+                  toast({
+                    title: 'Error',
+                    description:
+                      error?.response?.data?.message ||
+                      error?.message ||
+                      'No se pudo crear el plan.',
+                    variant: 'destructive',
+                  })
+                } finally {
+                  setPlanActionLoading(false)
+                }
+              }}
+              disabled={planActionLoading}
+            >
+              {planActionLoading ? 'Guardando...' : 'Guardar plan'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     <UserEditDialog
       open={userEditOpen}

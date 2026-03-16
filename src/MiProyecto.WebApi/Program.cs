@@ -20,6 +20,8 @@ using MiProyecto.Infrastructure.GameRooms.Repositories;
 using MiProyecto.Infrastructure.Persistence.UnitOfWork;
 using MiProyecto.Infrastructure.Reservations.Repositories;
 using MiProyecto.Infrastructure.Security;
+using MiProyecto.Application.Subscriptions.Interfaces;
+using MiProyecto.Infrastructure.Subscriptions;
 using MiProyecto.Infrastructure.Users.Repositories;
 using MiProyecto.WebApi.Middleware;
 using System.IdentityModel.Tokens.Jwt;
@@ -223,6 +225,7 @@ builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IRefreshSessionRepository, RefreshSessionRepository>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+builder.Services.AddScoped<IPlanRepository, PlanRepository>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddApplicationServices();

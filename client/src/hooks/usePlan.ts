@@ -10,9 +10,7 @@ export function usePlan() {
         try {
             setLoading(true);
             setError(null);
-            const response = await planService.getAll();
-            // planService.getAll() ya devuelve el array directamente, no response.data
-            const plansData = Array.isArray(response) ? response : [];
+            const plansData = await planService.getActive();
             setPlans(plansData);
             return plansData;
         } catch (err: any) {
@@ -29,8 +27,8 @@ export function usePlan() {
         try {
             setLoading(true);
             setError(null);
-            const response = await planService.getBySlug(slug);
-            return response.data;
+            const plan = await planService.getBySlug(slug);
+            return plan;
         } catch (err: any) {
             const errorMessage = err.response?.data?.message || 'Error al obtener el plan';
             setError(errorMessage);
@@ -44,9 +42,9 @@ export function usePlan() {
         try {
             setLoading(true);
             setError(null);
-            const response = await planService.create(data);    
-            setPlans(prev => [...prev, response.data]);
-            return response.data;
+            await planService.create(data);    
+            const refreshed = await getPlans();
+            return refreshed;
         } catch (err: any) {
             const errorMessage = err.response?.data?.message || 'Error al crear el plan';
             setError(errorMessage);
@@ -60,9 +58,12 @@ export function usePlan() {
         try {
             setLoading(true);
             setError(null);
-            const response = await planService.update(slug, data);
-            setPlans(prev => prev.map(plan => plan.slug === slug ? response.data : plan));
-            return response.data;
+            // En este momento no usamos update en el front público,
+            // pero mantenemos la firma por si se reutiliza.
+            // Para mantener consistencia, refrescamos la lista.
+            // Necesitarías el id del plan para actualizar en /admin/plans/{id}.
+            console.warn('updatePlan no está completamente implementado para admin.');
+            return;
         } catch (err: any) {
             const errorMessage = err.response?.data?.message || 'Error al actualizar el plan';
             setError(errorMessage);
@@ -77,7 +78,8 @@ export function usePlan() {
             setLoading(true);
             setError(null);
             await planService.delete(slug);
-            setPlans(prev => prev.filter(plan => plan.slug !== slug));
+            const refreshed = await getPlans();
+            return refreshed;
         } catch (err: any) {
             const errorMessage = err.response?.data?.message || 'Error al eliminar el plan';
             setError(errorMessage);

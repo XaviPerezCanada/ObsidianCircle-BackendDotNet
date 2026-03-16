@@ -24,10 +24,12 @@ export function PaySubscriptionPage() {
     const [processing, setProcessing] = useState(false);
 
     useEffect(() => {
-        if (!isAuthenticated) {
+        const hasSessionId = searchParams.get('session_id');
+        // Si venimos de Stripe con session_id, NO redirigimos al login
+        if (!isAuthenticated && !hasSessionId) {
             navigate("/login");
         }
-    }, [isAuthenticated, navigate]);
+    }, [isAuthenticated, navigate, searchParams]);
 
     useEffect(() => {
         // Seleccionar el primer plan activo por defecto

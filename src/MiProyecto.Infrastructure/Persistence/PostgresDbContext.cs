@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using MiProyecto.Domain.BoardGames.Entities;
 using MiProyecto.Domain.GameRooms.Entities;
 using MiProyecto.Domain.Reservation.Entities;
+using MiProyecto.Domain.Subscriptions;
 using MiProyecto.Domain.Users;
 
 public class PostgresDbContext : DbContext
@@ -13,6 +14,7 @@ public class PostgresDbContext : DbContext
     public DbSet<GameRoom> GameRooms => Set<GameRoom>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
     public DbSet<ReservationBlock> ReservationBlocks => Set<ReservationBlock>();
+    public DbSet<Plan> Plans => Set<Plan>();
     public DbSet<RefreshSession> RefreshSessions { get; set; }
 
 
