@@ -140,7 +140,9 @@ app.get('/notifications', requireAuth, (req, res) => {
     });
   }
 
-  const notifications = getAllNotifications(status);
+  const raw = getAllNotifications(status);
+  const notifications = filterNotificationsForUser(raw, req.user)
+    .map(mapNotificationRow);
   res.json({ count: notifications.length, notifications });
 });
 
@@ -155,12 +157,12 @@ app.get('/notifications/:id', requireAuth, (req, res) => {
   const notification = getNotificationById(id);
   if (!notification) return res.status(404).json({ error: `Notificación ID ${id} no encontrada` });
 
-  // Parsear channels y data para mayor comodidad
-  res.json({
-    ...notification,
-    channels: _safeJson(notification.channels),
-    data: _safeJson(notification.data),
-  });
+  if (!notificationVisibleToUser(notification, req.user)) {
+    return res.status(404).json({ error: `Notificación ID ${id} no encontrada` });
+  }
+
+  const parsed = mapNotificationRow(notification);
+  res.json(parsed);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -205,4 +207,44 @@ app.get('/notifications/:id', requireAuth, (req, res) => {
 
 function _safeJson(str) {
   try { return JSON.parse(str || '{}'); } catch { return {}; }
+}
+
+/** Parsea `channels` almacenado como JSON y `data` para la respuesta API. */
+function mapNotificationRow(row) {
+  const channelsRaw = _safeJson(row.channels);
+  const channels = Array.isArray(channelsRaw) ? channelsRaw : [];
+  const data = typeof row.data === 'string' ? _safeJson(row.data) : row.data;
+  return {
+    ...row,
+    channels,
+    data: data && typeof data === 'object' ? data : {},
+  };
+}
+
+/**
+ * Sin JWT_SECRET (modo dev) → no filtramos (mismo comportamiento que antes).
+ * Con JWT: cada usuario ve notificaciones que él encoló (`_auth_user_id` = sub del .NET)
+ * o dirigidas a él como socio propietario (`propietario` = username).
+ */
+function notificationVisibleToUser(row, reqUser) {
+  if (!process.env.JWT_SECRET) return true;
+
+  const sub = (reqUser?.sub || '').trim();
+  if (!sub || sub === 'anonymous') return true;
+
+  const data = typeof row.data === 'string' ? _safeJson(row.data) : row.data || {};
+  const propietario = (data.propietario || '').toString().trim();
+  const authId = (data._auth_user_id || '').toString().trim();
+
+  if (authId && authId === sub) return true;
+  if (propietario && propietario.toLowerCase() === sub.toLowerCase()) return true;
+
+  // Notificaciones antiguas sin destinatario explícito
+  if (!propietario && !authId) return true;
+
+  return false;
+}
+
+function filterNotificationsForUser(rows, reqUser) {
+  return rows.filter((row) => notificationVisibleToUser(row, reqUser));
 }

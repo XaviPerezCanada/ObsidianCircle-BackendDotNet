@@ -1,13 +1,16 @@
 // services/notifications.service.ts
-// Servicio que llama al backend de notificaciones (Node.js en puerto 3005)
-// El token JWT se inyecta automáticamente desde authStore via el interceptor de notificationsApi
-
+// Backend Node: backend-notifications (PORT en .env, por defecto 3000 — ver .env.example)
+// El token JWT se inyecta desde authStore; JWT_SECRET del gateway debe coincidir con la API .NET.
 import axios, { type InternalAxiosRequestConfig } from 'axios'
 import { authStore } from '@/src/lib/auth-store'
 
+const NOTIFICATIONS_BASE =
+  (import.meta.env.VITE_NOTIFICATIONS_URL as string | undefined)?.replace(/\/$/, '') ??
+  'http://localhost:3000'
+
 // ─── Cliente axios dedicado al servicio de notificaciones ────────────────────
 export const notificationsApi = axios.create({
-  baseURL: 'http://localhost:3005',
+  baseURL: NOTIFICATIONS_BASE,
   headers: { 'Content-Type': 'application/json' },
 })
 

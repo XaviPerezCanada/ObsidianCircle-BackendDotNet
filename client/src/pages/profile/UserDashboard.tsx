@@ -14,7 +14,7 @@ import type { Juego } from "@/src/services/juego.service";
 import { format } from "date-fns";
 import { es } from "date-fns/locale/es";
 import { toast } from "@/src/hooks/use-toast";
-import { ReportDamageDialog } from "@/src/components/profile/ReportDamageDialog";
+import { ReportDamageDialog } from "@/src/components/reservations/ReportDamageDialog";
 import type { Reserva } from "@/src/services/reservation.service";
 
 const FRANJAS: { value: TimeSlot; label: string }[] = [
@@ -86,12 +86,6 @@ export function UserDashboard() {
     return <div>No user found</div>;
   }
 
- 
-  if (user.tipo !== 'SOCIO') {
-    return <div>Acceso restringido: Solo para usuarios SOCIO</div>;
-  }
-
-
   const misJuegos = juegos.filter(juego => juego.socio === user.username);
 
   return (
@@ -104,18 +98,23 @@ export function UserDashboard() {
           <p>Bienvenido, {user.username}</p>
           <p>Tipo de usuario: {user.tipo}</p>
         </CardContent>
-        <CardContent>
-          <Button onClick={handleShowAddArticle}>Agregar Juego</Button>
-        </CardContent>
-        <CardContent>
-          {loading && <p className="text-muted-foreground">Cargando juegos...</p>}
-          {error && <p className="text-destructive">Error: {error}</p>}
-          {!loading && !error && misJuegos.length === 0 && (
-            <p className="text-muted-foreground">No tienes juegos agregados aún</p>
-          )}
-        </CardContent>
 
-        {/* Mis reservas */}
+        {user.tipo === "SOCIO" && (
+          <>
+            <CardContent>
+              <Button onClick={handleShowAddArticle}>Agregar Juego</Button>
+            </CardContent>
+            <CardContent>
+              {loading && <p className="text-muted-foreground">Cargando juegos...</p>}
+              {error && <p className="text-destructive">Error: {error}</p>}
+              {!loading && !error && misJuegos.length === 0 && (
+                <p className="text-muted-foreground">No tienes juegos agregados aún</p>
+              )}
+            </CardContent>
+          </>
+        )}
+
+        {/* Mis reservas (cualquier usuario con reservas; reporte de desperfectos solo si hay juego asignado) */}
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5" />
@@ -194,66 +193,68 @@ export function UserDashboard() {
           </Button>
         </CardContent>
 
-        <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {misJuegos.map((juego) => {
-              const Icon = getJuegoIcon(juego.genero as 'MESA' | 'ROL');
-              return (
-                <div
-                  key={juego.id}
-                  className="group p-6 rounded-lg border border-border bg-card/50 hover:bg-card hover:border-primary/30 transition-all duration-300"
-                >
-                  <div className="w-12 h-12 rounded-md bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                    <Icon className="w-6 h-6 text-primary" />
+        {user.tipo === "SOCIO" && (
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {misJuegos.map((juego) => {
+                const Icon = getJuegoIcon(juego.genero as 'MESA' | 'ROL');
+                return (
+                  <div
+                    key={juego.id}
+                    className="group p-6 rounded-lg border border-border bg-card/50 hover:bg-card hover:border-primary/30 transition-all duration-300"
+                  >
+                    <div className="w-12 h-12 rounded-md bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                      <Icon className="w-6 h-6 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                      {juego.titulo}
+                    </h3>
+                    {juego.descripcion && (
+                      <p className="text-sm text-muted-foreground leading-relaxed mb-2">
+                        {juego.descripcion}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      <Badge variant="outline">{juego.genero}</Badge>
+                      <Badge className={juego.estado === 'ACTIVO' ? 'bg-emerald-600' : 'bg-slate-600'}>
+                        {juego.estado}
+                      </Badge>
+                    </div>
+                    {(juego.jugadoresMin || juego.jugadoresMax) && (
+                      <p className="text-xs text-muted-foreground">
+                        Jugadores: {juego.jugadoresMin || '?'} - {juego.jugadoresMax || '?'}
+                      </p>
+                    )}
+                    {juego.edadRecomendada && (
+                      <p className="text-xs text-muted-foreground">
+                        Edad recomendada: {juego.edadRecomendada}
+                      </p>
+                    )}
+                    {juego.duracionMinutos && (
+                      <p className="text-xs text-muted-foreground">
+                        Duracion: {juego.duracionMinutos} minutos
+                      </p>
+                    )}
+                    {juego.categoria && (
+                      <p className="text-xs text-muted-foreground">
+                        Categoria: {juego.categoria}
+                      </p>
+                    )}
+                    <div className="mt-4 flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEditJuego(juego)}
+                      >
+                        Editar
+                      </Button>
+                    </div>
                   </div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2">
-                    {juego.titulo}
-                  </h3>
-                  {juego.descripcion && (
-                    <p className="text-sm text-muted-foreground leading-relaxed mb-2">
-                      {juego.descripcion}
-                    </p>
-                  )}
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    <Badge variant="outline">{juego.genero}</Badge>
-                    <Badge className={juego.estado === 'ACTIVO' ? 'bg-emerald-600' : 'bg-slate-600'}>
-                      {juego.estado}
-                    </Badge>
-                  </div>
-                  {(juego.jugadoresMin || juego.jugadoresMax) && (
-                    <p className="text-xs text-muted-foreground">
-                      Jugadores: {juego.jugadoresMin || '?'} - {juego.jugadoresMax || '?'}
-                    </p>
-                  )}
-                  {juego.edadRecomendada && (
-                    <p className="text-xs text-muted-foreground">
-                      Edad recomendada: {juego.edadRecomendada}
-                    </p>
-                  )}
-                  {juego.duracionMinutos && (
-                    <p className="text-xs text-muted-foreground">
-                      Duracion: {juego.duracionMinutos} minutos
-                    </p>
-                  )}
-                  {juego.categoria && (
-                    <p className="text-xs text-muted-foreground">
-                      Categoria: {juego.categoria}
-                    </p>
-                  )}
-                  <div className="mt-4 flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEditJuego(juego)}
-                    >
-                      Editar
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
         <CardFooter>
             <Button onClick={() => navigate("/profile")}>Volver</Button>
         </CardFooter>

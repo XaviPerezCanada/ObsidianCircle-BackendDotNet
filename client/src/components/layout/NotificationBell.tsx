@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Bell } from 'lucide-react'
+import { useAuth } from '@/src/context/auth-context'
 import {
   Popover,
   PopoverContent,
@@ -74,37 +75,99 @@ function NotificationItem({ n }: { n: Notification }) {
   )
 }
 
+/** Cola real (siempre cuenta) o procesadas aún no vistas (creación posterior a “última lectura”). */
+function needsNavbarAttention(n: Notification, lastSeenMs: number): boolean {
+  const s = n.status
+  if (s === 'pending' || s === 'processing' || s === 'failed') return true
+  if (s === 'processed') {
+    return new Date(n.created_at).getTime() > lastSeenMs
+  }
+  return false
+}
+
+function readLastSeenMs(storageKey: string): number {
+  try {
+    const raw = localStorage.getItem(storageKey)
+    if (!raw) return 0
+    const n = parseInt(raw, 10)
+    return Number.isFinite(n) ? n : 0
+  } catch {
+    return 0
+  }
+}
+
 // ─── NotificationBell ────────────────────────────────────────────────────────
 
 export function NotificationBell() {
+  const { user } = useAuth()
   const [open, setOpen] = useState(false)
 
-  // Polling cada 10s — se activa al abrir el popover y sigue en background
-  const { notifications, loading } = useNotifications(undefined, 10_000)
+  const lastSeenStorageKey = useMemo(
+    () => `notifications_last_seen_ms_${user?.username ?? 'anon'}`,
+    [user?.username],
+  )
 
-  const pendingCount  = notifications.filter(n => n.status === 'pending' || n.status === 'processing').length
-  const hasPending    = pendingCount > 0
-  const recent        = notifications.slice(0, 8) // mostrar las 8 más recientes
+  const [lastSeenMs, setLastSeenMs] = useState(0)
+
+  useEffect(() => {
+    setLastSeenMs(readLastSeenMs(lastSeenStorageKey))
+  }, [lastSeenStorageKey])
+
+  const markNotificationsSeen = useCallback(() => {
+    const t = Date.now()
+    setLastSeenMs(t)
+    try {
+      localStorage.setItem(lastSeenStorageKey, String(t))
+    } catch {
+      /* ignore quota */
+    }
+  }, [lastSeenStorageKey])
+
+  // Polling frecuente para ver pending/processing antes de que el worker termine (intervalo típico 5s)
+  const { notifications, loading, error } = useNotifications(undefined, 3_000)
+
+  const attentionCount = notifications.filter((n) => needsNavbarAttention(n, lastSeenMs)).length
+  const hasAttention = attentionCount > 0
+  const recent = notifications.slice(0, 8)
+
+  const handleOpenChange = useCallback(
+    (next: boolean) => {
+      setOpen(next)
+      if (next) markNotificationsSeen()
+    },
+    [markNotificationsSeen],
+  )
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
           size="icon"
           className="relative text-muted-foreground hover:text-foreground"
-          aria-label={hasPending ? `${pendingCount} notificaciones pendientes` : 'Notificaciones'}
+          aria-label={
+            error
+              ? 'Error al cargar notificaciones'
+              : hasAttention
+                ? `${attentionCount} notificaciones`
+                : 'Notificaciones'
+          }
+          title={error ?? undefined}
         >
           <Bell className="w-5 h-5" />
 
-          {/* Badge rojo con contador */}
-          {hasPending && (
+          {/* Badge rojo con contador (cola + procesadas recientes) */}
+          {hasAttention && (
             <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center">
               <span className="absolute inline-flex h-3.5 w-3.5 rounded-full bg-red-500 opacity-75 animate-ping" />
               <span className="relative inline-flex items-center justify-center h-3.5 w-3.5 rounded-full bg-red-500 text-white text-[8px] font-bold leading-none">
-                {pendingCount > 9 ? '9+' : pendingCount}
+                {attentionCount > 9 ? '9+' : attentionCount}
               </span>
             </span>
+          )}
+
+          {error && !hasAttention && (
+            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-500" title={error} />
           )}
         </Button>
       </PopoverTrigger>
@@ -117,9 +180,14 @@ export function NotificationBell() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/60">
           <span className="text-sm font-semibold text-foreground">Notificaciones</span>
-          {hasPending && (
+          {error && (
+            <span className="text-xs text-amber-600 dark:text-amber-400 max-w-[200px] truncate" title={error}>
+              Sin conexión al servicio
+            </span>
+          )}
+          {hasAttention && !error && (
             <span className="text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 px-2 py-0.5 rounded-full">
-              {pendingCount} pendiente{pendingCount > 1 ? 's' : ''}
+              {attentionCount} sin leer
             </span>
           )}
         </div>

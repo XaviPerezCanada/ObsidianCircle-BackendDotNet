@@ -29,9 +29,15 @@ export function useNotifications(
       const data = await notificationsService.getAll(status)
       setNotifications(data.notifications)
     } catch (err: unknown) {
+      const ax = err as { response?: { status?: number; data?: { error?: string; detail?: string } }; message?: string }
       const msg =
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-        ?? 'Error al cargar notificaciones.'
+        ax.response?.data?.error
+        ?? ax.response?.data?.detail
+        ?? (ax.response?.status === 401
+          ? 'No autorizado (revisa JWT_SECRET en el gateway de notificaciones).'
+          : ax.message === 'Network Error'
+            ? 'No hay conexión con el gateway (revisa que el servidor Node esté en marcha y VITE_NOTIFICATIONS_URL).'
+            : 'Error al cargar notificaciones.')
       setError(String(msg))
       setNotifications([])
     } finally {
