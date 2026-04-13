@@ -14,6 +14,8 @@ import type { Juego } from "@/src/services/juego.service";
 import { format } from "date-fns";
 import { es } from "date-fns/locale/es";
 import { toast } from "@/src/hooks/use-toast";
+import { ReportDamageDialog } from "@/src/components/profile/ReportDamageDialog";
+import type { Reserva } from "@/src/services/reservation.service";
 
 const FRANJAS: { value: TimeSlot; label: string }[] = [
   { value: "Morning", label: "Mañana" },
@@ -29,7 +31,14 @@ export function UserDashboard() {
   const [showEditArticle, setShowEditArticle] = useState(false);
   const [selectedJuego, setSelectedJuego] = useState<Juego | null>(null);
 
-  const { juegos, loading, error, getJuegos } = useJuego();
+  // Estado para el dialog de reporte
+  const [reportState, setReportState] = useState<{
+    isOpen: boolean;
+    reserva?: Reserva;
+    juego?: Juego;
+  }>({ isOpen: false });
+
+  const { juegos, loading, error, getJuegos } = useJuego({ listAll: true });
   const { reservations: misReservas, loading: reservasLoading, error: reservasError, refetch: refetchReservas } = useMyReservations();
 
 
@@ -130,6 +139,8 @@ export function UserDashboard() {
             <div className="space-y-3 mb-4">
               {misReservas.map((r) => {
                 const franjaLabel = FRANJAS.find((f) => f.value === r.franja_id)?.label ?? r.franja_id;
+                const juegoAsignado = r.juego_id ? juegos.find(j => j.id === r.juego_id) : null;
+
                 return (
                   <div
                     key={r.id}
@@ -140,11 +151,29 @@ export function UserDashboard() {
                         {format(new Date(r.fecha + "T12:00:00"), "EEEE, d MMM yyyy", { locale: es })}
                       </p>
                       <p className="text-sm text-muted-foreground">{franjaLabel}</p>
+                      {juegoAsignado && (
+                        <p className="text-xs text-muted-foreground mt-1 text-primary">
+                          Juego: {juegoAsignado.titulo}
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant={r.estado === "CANCELADA" ? "secondary" : "default"}>
                         {r.estado === "CANCELADA" ? "Cancelada" : "Confirmada"}
                       </Badge>
+                      
+                      {/* Botón de reportar (solo si hay juego y no está cancelada) */}
+                      {r.estado !== "CANCELADA" && juegoAsignado && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-warning text-warning hover:bg-warning/10"
+                          onClick={() => setReportState({ isOpen: true, reserva: r, juego: juegoAsignado })}
+                        >
+                          ⚠️ Reportar desperfecto
+                        </Button>
+                      )}
+
                       {r.estado !== "CANCELADA" && (
                         <Button
                           size="sm"
@@ -259,6 +288,16 @@ export function UserDashboard() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de reporte de daños */}
+      {reportState.reserva && reportState.juego && (
+        <ReportDamageDialog
+          isOpen={reportState.isOpen}
+          onClose={() => setReportState({ isOpen: false })}
+          reserva={reportState.reserva}
+          juego={reportState.juego}
+        />
+      )}
     </div>
   )
 }

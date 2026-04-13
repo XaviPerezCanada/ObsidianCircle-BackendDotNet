@@ -8,6 +8,7 @@ import { SignForm } from "@/src/components/User/Login/SingForm";
 import { RegisterForm } from "@/src/components/User/Login/RegisterForm";
 import { useAuth } from "@/src/context/auth-context";
 import { toast } from "@/src/components/ui/use-toast";
+import { NotificationBell } from "@/src/components/layout/NotificationBell";
 
 const navLinks = [
   
@@ -89,6 +90,8 @@ export function Navbar() {
         {/* Escritorio de usuario */}
         {isAuthenticated ? (
           <div className="hidden md:flex items-center gap-4">
+            {/* Campana de notificaciones — solo usuarios logueados */}
+            <NotificationBell />
             <div className="flex items-center gap-2">
               <Avatar>
                 <AvatarImage src="https://github.com/shadcn.png" />
