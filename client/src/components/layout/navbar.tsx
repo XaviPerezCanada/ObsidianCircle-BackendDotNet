@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/src/components/ui/button";
-import { Menu, X, ShipWheel } from "lucide-react";
+import { Menu, X, ShipWheel, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
 import { Avatar, AvatarImage, AvatarFallback } from "@/src/components/ui/avatar";
 import { Dialog, DialogContent } from "@/src/components/ui/dialog";
 import { SignForm } from "@/src/components/User/Login/SingForm";
@@ -25,6 +26,11 @@ export function Navbar() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const { isAuthenticated, logout, user } = useAuth();
+  const { theme, setTheme } = useTheme();
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
 
   const visibleLinks = navLinks.filter((link) => {
  
@@ -92,6 +98,20 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-4">
             {/* Campana de notificaciones — solo usuarios logueados */}
             <NotificationBell />
+            {/* Toggle tema claro/oscuro */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              aria-label="Cambiar tema"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {theme === "dark" ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
+            </Button>
             <div className="flex items-center gap-2">
               <Avatar>
                 <AvatarImage src="https://github.com/shadcn.png" />
@@ -120,6 +140,20 @@ export function Navbar() {
           </div>
         ) : (
           <div className="hidden md:flex items-center gap-4">
+            {/* Toggle tema claro/oscuro */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              aria-label="Cambiar tema"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {theme === "dark" ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -177,6 +211,18 @@ export function Navbar() {
               );
             })}
             <div className="pt-4 flex flex-col gap-2">
+              {/* Toggle tema claro/oscuro — mobile */}
+              <Button
+                variant="outline"
+                className="w-full bg-transparent"
+                onClick={toggleTheme}
+              >
+                {theme === "dark" ? (
+                  <><Sun className="w-4 h-4 mr-2" /> Tema claro</>
+                ) : (
+                  <><Moon className="w-4 h-4 mr-2" /> Tema oscuro</>
+                )}
+              </Button>
               <Button 
                 variant="outline" 
                 className="w-full bg-transparent"

@@ -103,4 +103,15 @@ export const reservationService = {
   cancel: async (slug: string): Promise<void> => {
     await api.delete(`/reservations/${encodeURIComponent(slug)}`)
   },
+
+  /** Editar reserva (cambiar fecha/franja/juego) por slug */
+  update: async (slug: string, data: { fecha: string; franja_id: TimeSlot; juego_id?: number | null }): Promise<Reserva> => {
+    const payload = {
+      date: data.fecha,
+      slot: data.franja_id,
+      boardGameId: data.juego_id ?? null,
+    }
+    const res = await api.put<ReservationResponseDto>(`/reservations/${encodeURIComponent(slug)}`, payload)
+    return mapFromDto(res.data)
+  },
 }
