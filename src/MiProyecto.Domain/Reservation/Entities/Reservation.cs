@@ -51,6 +51,21 @@ namespace MiProyecto.Domain.Reservation.Entities
             ModifiedAt = DateTime.UtcNow;
         }
 
+        public void Editar(DateOnly nuevaFecha, TimeSlot nuevaFranja, int? boardGameId)
+        {
+            if (Estado != ReservationStatus.Active)
+                throw new InvalidOperationException("Solo se pueden editar reservas activas.");
+
+            Date = nuevaFecha;
+            Franja = nuevaFranja;
+            BoardGameId = boardGameId;
+            ModifiedAt = DateTime.UtcNow;
+
+            Blocks.Clear();
+            foreach (var block in ToBlocks(nuevaFranja))
+                Blocks.Add(new ReservationBlock(Id, GameRoomId, nuevaFecha, block));
+        }
+
         private static IEnumerable<BlockSlot> ToBlocks(TimeSlot franja) => franja switch
         {
             TimeSlot.Morning => new[] { BlockSlot.Morning },

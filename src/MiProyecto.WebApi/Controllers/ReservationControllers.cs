@@ -6,6 +6,7 @@ using MiProyecto.Application.Common;
 using MiProyecto.Application.Reservations.Dtos;
 using MiProyecto.Application.Reservations.Interfaces;
 using MiProyecto.Application.Reservations.Services.CancelReservation;
+using MiProyecto.Application.Reservations.Services.UpdateReservation;
 using MiProyecto.Application.Reservations.UseCases.CreateReservation;
 using MiProyecto.Domain.Common.ValueObjects;
 using MiProyecto.Domain.Reservation;
@@ -22,17 +23,20 @@ public class ReservationsController : ControllerBase
 {
     private readonly CreateReservationHandler _createHandler;
     private readonly CancelReservationHandler _cancelHandler;
+    private readonly UpdateReservationHandler _updateHandler;
     private readonly IReservationRepository _reservationRepository;
     private readonly IUserRepository _userRepository;
 
     public ReservationsController(
         CreateReservationHandler createHandler,
         CancelReservationHandler cancelHandler,
+        UpdateReservationHandler updateHandler,
         IReservationRepository reservationRepository,
         IUserRepository userRepository)
     {
         _createHandler = createHandler;
         _cancelHandler = cancelHandler;
+        _updateHandler = updateHandler;
         _reservationRepository = reservationRepository;
         _userRepository = userRepository;
     }
@@ -135,6 +139,38 @@ public class ReservationsController : ControllerBase
             return NotFound(new { error = "Reserva no encontrada." });
 
         return Ok(MapToResponse(reservation));
+    }
+
+    /// <summary>
+    /// Edita una reserva (cambiar fecha/franja/juego) por slug o id.
+    /// </summary>
+    [HttpPut("{slugOrId}")]
+    public async Task<IActionResult> Update(string slugOrId, [FromBody] UpdateReservationRequest request, CancellationToken ct)
+    {
+        var currentUser = await GetCurrentUserAsync(ct);
+        if (currentUser is null)
+            return Unauthorized();
+
+        var reservation = await _reservationRepository.GetBySlugAsync(slugOrId, ct);
+        if (reservation is null && Guid.TryParse(slugOrId, out var id))
+            reservation = await _reservationRepository.GetByIdAsync(id);
+        if (reservation is null)
+            return NotFound(new { error = "Reserva no encontrada." });
+
+        // Verify ownership
+        var userId = UserIdFromEmail.ToGuid(currentUser.Email);
+        if (reservation.UserId != userId)
+            return Forbid();
+
+        var result = await _updateHandler.HandleAsync(reservation.Id, request);
+        if (!result.IsSuccess)
+        {
+            if (result.Error!.Contains("reservada") || result.Error!.Contains("reservado"))
+                return Conflict(new { error = result.Error });
+            return BadRequest(new { error = result.Error });
+        }
+
+        return Ok(result.Value);
     }
 
     /// <summary>

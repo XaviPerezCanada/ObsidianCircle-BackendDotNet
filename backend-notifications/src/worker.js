@@ -50,7 +50,7 @@ async function processNextNotification() {
 
       const handler = CHANNEL_HANDLERS[channel];
       if (handler) {
-        handler.send(notification, message);
+        await handler.send(notification, message);
       } else {
         console.warn(`⚠️  [Worker] Canal desconocido: "${channel}" — saltando`);
       }

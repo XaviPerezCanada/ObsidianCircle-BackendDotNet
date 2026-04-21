@@ -159,4 +159,88 @@ public sealed class ReservationRepository : IReservationRepository
             .OrderBy(r => r.Franja)
             .ToListAsync(ct);
     }
+
+    public async Task<(bool Ok, bool Conflict)> TryUpdateAsync(Reservation reservation, IEnumerable<ReservationBlock> oldBlocks)
+    {
+        var blocksToLock = GetBlockSlotsFor(reservation.Franja).ToList();
+        await using var transaction = await _db.Database.BeginTransactionAsync();
+
+        try
+        {
+            // Pessimistic advisory locks on new blocks
+            foreach (var block in blocksToLock)
+            {
+                var lockKey = GetAdvisoryLockKey(reservation.GameRoomId, reservation.Date, block);
+                await _db.Database.ExecuteSqlRawAsync(
+                    "SELECT pg_advisory_xact_lock({0})",
+                    lockKey);
+            }
+
+            // Check for room/slot conflicts excluding this reservation
+            var exists = await (
+                from b in _db.ReservationBlocks
+                join r in _db.Reservations on b.ReservationId equals r.Id
+                where b.GameRoomId == reservation.GameRoomId
+                      && b.Date == reservation.Date
+                      && blocksToLock.Contains(b.Bloque)
+                      && r.Estado == ReservationStatus.Active
+                      && r.Id != reservation.Id
+                select b
+            ).AnyAsync();
+
+            if (exists)
+            {
+                await transaction.RollbackAsync();
+                return (false, true);
+            }
+
+            // Explicitly manage entity states to avoid the concurrency issue:
+            // - Old blocks must be Deleted (they exist in DB but were removed from collection)
+            // - New blocks must be Added (they don't exist in DB yet)
+            // - The reservation itself is already tracked as Modified by EF change tracker
+            // We can't use _db.Update() because it marks ALL entities as Modified,
+            // including the new blocks which would generate UPDATE instead of INSERT.
+            foreach (var oldBlock in oldBlocks)
+                _db.Entry(oldBlock).State = Microsoft.EntityFrameworkCore.EntityState.Deleted;
+
+            foreach (var newBlock in reservation.Blocks)
+                _db.Entry(newBlock).State = Microsoft.EntityFrameworkCore.EntityState.Added;
+
+            await _db.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+            return (true, false);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == "23505")
+        {
+            await transaction.RollbackAsync();
+            return (false, true);
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+
+    public async Task<bool> HasBoardGameConflictAsync(
+        Guid excludeReservationId,
+        int boardGameId,
+        DateOnly date,
+        IEnumerable<BlockSlot> blocks,
+        CancellationToken ct = default)
+    {
+        var blockList = blocks.ToList();
+
+        return await (
+            from r in _db.Reservations
+            join b in _db.ReservationBlocks on r.Id equals b.ReservationId
+            where r.Id != excludeReservationId
+                  && r.Estado == ReservationStatus.Active
+                  && r.BoardGameId == boardGameId
+                  && b.Date == date
+                  && blockList.Contains(b.Bloque)
+            select r
+        ).AnyAsync(ct);
+    }
 }

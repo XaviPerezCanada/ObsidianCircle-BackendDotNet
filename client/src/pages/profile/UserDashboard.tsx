@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale/es";
 import { toast } from "@/src/hooks/use-toast";
 import { ReportDamageDialog } from "@/src/components/reservations/ReportDamageDialog";
+import { EditReservationDialog } from "@/src/components/reservations/EditReservationDialog";
 import type { Reserva } from "@/src/services/reservation.service";
 
 const FRANJAS: { value: TimeSlot; label: string }[] = [
@@ -36,6 +37,12 @@ export function UserDashboard() {
     isOpen: boolean;
     reserva?: Reserva;
     juego?: Juego;
+  }>({ isOpen: false });
+
+  // Estado para el dialog de edición
+  const [editState, setEditState] = useState<{
+    isOpen: boolean;
+    reserva?: Reserva;
   }>({ isOpen: false });
 
   const { juegos, loading, error, getJuegos } = useJuego({ listAll: true });
@@ -177,6 +184,17 @@ export function UserDashboard() {
                         <Button
                           size="sm"
                           variant="outline"
+                          className="border-primary text-primary hover:bg-primary/10"
+                          onClick={() => setEditState({ isOpen: true, reserva: r })}
+                        >
+                          ✏️ Editar
+                        </Button>
+                      )}
+
+                      {r.estado !== "CANCELADA" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => handleCancelarReserva(r.slug)}
                         >
                           Cancelar
@@ -297,6 +315,16 @@ export function UserDashboard() {
           onClose={() => setReportState({ isOpen: false })}
           reserva={reportState.reserva}
           juego={reportState.juego}
+        />
+      )}
+
+      {/* Dialog de edición de reserva */}
+      {editState.reserva && (
+        <EditReservationDialog
+          isOpen={editState.isOpen}
+          onClose={() => setEditState({ isOpen: false })}
+          reserva={editState.reserva}
+          onSuccess={refetchReservas}
         />
       )}
     </div>

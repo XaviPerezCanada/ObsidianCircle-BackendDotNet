@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MiProyecto.Application.BoardGames.UseCases;
 using MiProyecto.Application.GameRooms.Services;
 using MiProyecto.Application.Reservations.Services.CancelReservation;
+using MiProyecto.Application.Reservations.Services.UpdateReservation;
 using MiProyecto.Application.Reservations.UseCases.CreateReservation;
 
 namespace MiProyecto.Application;
@@ -21,6 +22,7 @@ public static class DependencyInjection
 
         services.AddScoped<CancelReservationHandler>();
 
+        services.AddScoped<UpdateReservationHandler>();
         return services;
     }
 }
